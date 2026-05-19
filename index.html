@@ -48,9 +48,41 @@
       justify-content: center;
       cursor: pointer;
       user-select: none;
+      overflow: hidden;
+    }
+
+    #landing-stars {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .book-glow {
+      position: absolute;
+      width: min(900px, 150vw);
+      height: min(900px, 150vw);
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        rgba(201, 168, 76, 0.35) 0%,
+        rgba(201, 168, 76, 0.18) 25%,
+        rgba(13, 74, 71, 0.25) 50%,
+        transparent 70%
+      );
+      pointer-events: none;
+      animation: glow-pulse 4s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.8; transform: scale(1); }
+      50%       { opacity: 1;   transform: scale(1.1); }
     }
 
     .book-stage {
+      position: relative;
+      z-index: 1;
       perspective: 2500px;
       perspective-origin: 50% 50%;
     }
@@ -575,6 +607,8 @@
 
 <!-- ════════════════════ LANDING OVERLAY ════════════════════ -->
 <div id="landing-overlay">
+  <canvas id="landing-stars"></canvas>
+  <div class="book-glow"></div>
   <div class="book-stage">
     <div class="book-container" id="book-container">
       <!-- Inside pages revealed when cover opens -->
@@ -684,7 +718,50 @@
 </div>
 
 <script>
-  /* ─── Starfield ─────────────────────────────────── */
+  /* ─── Landing Starfield ─────────────────────────── */
+  (function () {
+    const canvas = document.getElementById('landing-stars');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function resize() {
+      canvas.width  = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    }
+
+    function seed() {
+      stars = [];
+      for (let i = 0; i < 250; i++) {
+        stars.push({
+          x:     Math.random() * canvas.width,
+          y:     Math.random() * canvas.height,
+          r:     Math.random() * 1.0 + 0.1,
+          alpha: Math.random() * 0.45 + 0.05,
+          speed: Math.random() * 0.5 + 0.1,
+          phase: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    let t = 0;
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      t += 0.01;
+      for (const s of stars) {
+        const a = s.alpha * (0.4 + 0.6 * Math.sin(t * s.speed + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${a})`;
+        ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', () => { resize(); seed(); });
+    resize(); seed(); draw();
+  })();
+
+  /* ─── Hero Starfield ─────────────────────────────── */
   (function () {
     const canvas = document.getElementById('stars-canvas');
     const ctx = canvas.getContext('2d');
@@ -734,10 +811,18 @@
     const cover     = document.getElementById('book-cover');
     let triggered   = false;
 
+    // Idle animation — float, breathe, gentle sway
+    const idle = gsap.timeline({ repeat: -1, yoyo: true, ease: 'sine.inOut' });
+    idle.to(container, { y: -12, duration: 2.8, ease: 'sine.inOut' })
+        .to(container, { rotateY: 4, duration: 3.5, ease: 'sine.inOut' }, 0)
+        .to(container, { scale: 1.02, duration: 3.2, ease: 'sine.inOut' }, 0);
+
     overlay.addEventListener('click', function () {
       if (triggered) return;
       triggered = true;
       overlay.style.pointerEvents = 'none';
+      idle.kill();
+      gsap.set(container, { y: 0, rotateY: 0, scale: 1 });
 
       const tl = gsap.timeline({
         onComplete() { overlay.remove(); }
