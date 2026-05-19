@@ -168,23 +168,45 @@
       border-radius: 2px;
     }
 
-    /* Spine — left edge hinge line */
+    /* Spine — realistic hardcover binding */
     .book-spine {
       position: absolute;
       left: 0;
       top: 0;
-      width: 5px;
+      width: 18px;
       height: 100%;
-      background: linear-gradient(to right,
-        #5a4010,
-        var(--gold) 40%,
-        var(--gold) 60%,
-        #5a4010
-      );
       z-index: 5;
-      border-radius: 2px 0 0 2px;
+      border-radius: 3px 0 0 3px;
       pointer-events: none;
+      /* Rounded spine: dark teal outer edge → teal highlight → shadow into cover */
+      background: linear-gradient(to right,
+        #021a18 0%,
+        #041f1d 8%,
+        #072e2c 18%,
+        #0d4a47 30%,
+        #155f5b 40%,
+        #0d4a47 52%,
+        #072e2c 68%,
+        #041f1d 85%,
+        #021210 100%
+      );
+      box-shadow:
+        inset -2px 0 4px rgba(0,0,0,0.5),
+        -2px 0 8px rgba(0,0,0,0.6);
     }
+
+    /* Subtle top/bottom caps on the spine */
+    .book-spine::before,
+    .book-spine::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(to right, #021a18, #072e2c 40%, #041f1d);
+    }
+    .book-spine::before { top: 0; }
+    .book-spine::after  { bottom: 0; }
 
     /* Right-edge shadow to sell the book depth */
     .book-container::after {
