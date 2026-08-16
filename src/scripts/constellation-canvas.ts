@@ -436,11 +436,8 @@ function startTransition(c: Constellation) {
   `;
   document.body.appendChild(fadeOverlay);
 
-  // Prefetch the story page so it's ready when the animation finishes
-  const prefetchLink = document.createElement('link');
-  prefetchLink.rel = 'prefetch';
-  prefetchLink.href = `/constellations/${c.id}`;
-  document.head.appendChild(prefetchLink);
+  // Eagerly fetch the story page so it's cached when we navigate
+  fetch(`/constellations/${c.id}`).catch(() => {});
 
   // Phase 1 target: center on constellation at a comfortable zoom
   targetCamera.x = c.center.x;
@@ -498,8 +495,8 @@ function updateTransition() {
     camera.x += (targetCamera.x - camera.x) * 0.08;
     camera.y += (targetCamera.y - camera.y) * 0.08;
 
-    // Navigate as soon as overlay is opaque
-    if (p >= 1) {
+    // Navigate early — page loads behind the opaque overlay
+    if (p >= 0.7) {
       window.location.href = `/constellations/${transitionTarget.id}`;
     }
   }
