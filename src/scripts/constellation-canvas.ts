@@ -42,6 +42,9 @@ let mouseScreen = { x: -9999, y: -9999 };
 let hoveredConstellation: Constellation | null = null;
 let interacted = false;
 const isMobile = !window.matchMedia('(pointer: fine)').matches;
+let introActive = true;
+let introTimer = 0;
+const INTRO_GLOW_DURATION = 3.5; // seconds (matches CSS animation)
 let transitioning = false;
 let transitionTarget: Constellation | null = null;
 let transitionProgress = 0;
@@ -529,23 +532,39 @@ function frame() {
     hoveredConstellation = isDragging ? null : getHoveredConstellation();
     canvas.style.cursor = hoveredConstellation ? 'pointer' : isDragging ? 'grabbing' : 'grab';
 
-    // Update reveal progress
-    for (const c of constellations) {
-      let target: number;
-      if (isMobile) {
-        // On mobile, reveal constellations near the center of the screen
-        const [sx, sy] = worldToScreen(c.center.x, c.center.y);
-        const w = canvas.width / devicePixelRatio;
-        const h = canvas.height / devicePixelRatio;
-        const dx = sx - w / 2;
-        const dy = sy - h / 2;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const radius = Math.min(w, h) * 0.35;
-        target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
-      } else {
-        target = hoveredConstellation?.id === c.id ? 1 : 0;
+    // Intro glow — all constellations light up then fade
+    if (introActive) {
+      introTimer += 0.012;
+      const glowIn = Math.min(1, introTimer / 1.2); // fade in over ~1.2s
+      const glowOut = introTimer > 2.0 ? Math.min(1, (introTimer - 2.0) / 1.5) : 0; // fade out
+      const introGlow = glowIn * (1 - glowOut) * 0.45;
+      for (const c of constellations) {
+        revealProgress[c.id] = introGlow;
       }
-      revealProgress[c.id] += (target - revealProgress[c.id]) * REVEAL_SPEED;
+      if (introTimer > INTRO_GLOW_DURATION || interacted) {
+        introActive = false;
+        const overlay = document.getElementById('intro-overlay');
+        if (overlay) overlay.classList.add('fading');
+      }
+    } else {
+      // Update reveal progress
+      for (const c of constellations) {
+        let target: number;
+        if (isMobile) {
+          // On mobile, reveal constellations near the center of the screen
+          const [sx, sy] = worldToScreen(c.center.x, c.center.y);
+          const w = canvas.width / devicePixelRatio;
+          const h = canvas.height / devicePixelRatio;
+          const dx = sx - w / 2;
+          const dy = sy - h / 2;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const radius = Math.min(w, h) * 0.35;
+          target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
+        } else {
+          target = hoveredConstellation?.id === c.id ? 1 : 0;
+        }
+        revealProgress[c.id] += (target - revealProgress[c.id]) * REVEAL_SPEED;
+      }
     }
   }
 
