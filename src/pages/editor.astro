@@ -1,0 +1,347 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const entries = await getCollection('constellations');
+const existing = entries.map((e) => ({
+  id: e.id,
+  name: e.data.name,
+  subtitle: e.data.subtitle,
+  color: e.data.color,
+  center: e.data.center,
+  stars: e.data.stars,
+  lines: e.data.lines,
+}));
+---
+
+<Layout title="Constellation Editor — Tiny Lore">
+  <div class="editor-layout">
+    <aside class="sidebar">
+      <h1 class="editor-title">Constellation Editor</h1>
+
+      <div class="field">
+        <label>Load Existing</label>
+        <div class="load-buttons">
+          <button class="load-btn" data-id="">New</button>
+          {existing.map((c) => (
+            <button class="load-btn" data-id={c.id}>{c.name}</button>
+          ))}
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="name">Name</label>
+        <input type="text" id="name" placeholder="The Bear" />
+      </div>
+      <div class="field">
+        <label for="subtitle">Subtitle</label>
+        <input type="text" id="subtitle" placeholder="Guardian of the Forest" />
+      </div>
+      <div class="field">
+        <label for="color">Color</label>
+        <input type="color" id="color" value="#c9a84c" />
+      </div>
+      <div class="field">
+        <label for="filename">Filename</label>
+        <input type="text" id="filename" placeholder="bear" />
+      </div>
+
+      <div class="field">
+        <label>World Position <span id="center-coords" class="center-coords">(0, 0)</span></label>
+        <canvas id="minimap" width="260" height="260"></canvas>
+      </div>
+
+      <div class="tools">
+        <h2>Tools</h2>
+        <div class="tool-buttons">
+          <button id="mode-star" class="tool-btn active">Place Stars</button>
+          <button id="mode-line" class="tool-btn">Draw Lines</button>
+          <button id="mode-delete" class="tool-btn">Delete</button>
+        </div>
+      </div>
+
+      <div class="info">
+        <p id="star-count">Stars: 0</p>
+        <p id="line-count">Lines: 0</p>
+      </div>
+
+      <div class="actions">
+        <button id="btn-undo" class="action-btn">Undo</button>
+        <button id="btn-clear" class="action-btn">Clear All</button>
+        <button id="btn-export" class="action-btn primary">Copy Markdown</button>
+      </div>
+
+      <div id="export-feedback" class="feedback hidden">Copied to clipboard!</div>
+
+      <div class="help">
+        <h2>How to use</h2>
+        <ul>
+          <li><strong>Place Stars</strong> — click on the canvas to add stars</li>
+          <li><strong>Draw Lines</strong> — click two stars to connect them</li>
+          <li><strong>Delete</strong> — click a star or line to remove it</li>
+          <li><strong>World Position</strong> — click the mini-map to place your constellation in the sky</li>
+          <li>The crosshair shows the center (0, 0)</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="canvas-area">
+      <canvas id="editor-canvas"></canvas>
+    </main>
+
+    <script type="application/json" id="existing-data" set:html={JSON.stringify(existing)} />
+  </div>
+</Layout>
+
+<style>
+  .editor-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 300px;
+    min-width: 300px;
+    background: #051a19;
+    padding: 1.5rem;
+    overflow-y: auto;
+    border-right: 1px solid rgba(201, 168, 76, 0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+
+  .editor-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 400;
+    color: #f5efe0;
+    letter-spacing: 0.05em;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .field label {
+    font-size: 0.65rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.7;
+  }
+
+  .load-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .load-btn {
+    padding: 0.35rem 0.55rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    border-radius: 2px;
+    color: #c4b99a;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 400;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .load-btn:hover {
+    border-color: rgba(201, 168, 76, 0.4);
+    color: #f5efe0;
+  }
+
+  .load-btn.active {
+    background: rgba(201, 168, 76, 0.15);
+    border-color: #c9a84c;
+    color: #f5efe0;
+  }
+
+  .field input[type="text"] {
+    padding: 0.5rem 0.7rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 2px;
+    color: #f5efe0;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .field input[type="text"]:focus {
+    border-color: rgba(201, 168, 76, 0.5);
+  }
+
+  .field input[type="color"] {
+    width: 100%;
+    height: 36px;
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 2px;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  #minimap {
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 2px;
+    background: #072e2c;
+    cursor: crosshair;
+  }
+
+  .center-coords {
+    color: #f5efe0;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+  }
+
+  .tools h2, .help h2 {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.7;
+    margin-bottom: 0.5rem;
+  }
+
+  .tool-buttons {
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .tool-btn {
+    flex: 1;
+    padding: 0.45rem 0.3rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    border-radius: 2px;
+    color: #c4b99a;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.62rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .tool-btn:hover {
+    border-color: rgba(201, 168, 76, 0.4);
+  }
+
+  .tool-btn.active {
+    background: rgba(201, 168, 76, 0.15);
+    border-color: #c9a84c;
+    color: #f5efe0;
+  }
+
+  .info {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.75rem;
+    color: #c4b99a;
+    font-weight: 300;
+  }
+
+  .actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 0.5rem 0.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    border-radius: 2px;
+    color: #c4b99a;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .action-btn:hover {
+    border-color: rgba(201, 168, 76, 0.4);
+  }
+
+  .action-btn.primary {
+    background: rgba(201, 168, 76, 0.15);
+    border-color: #c9a84c;
+    color: #f5efe0;
+    flex-basis: 100%;
+  }
+
+  .action-btn.primary:hover {
+    background: rgba(201, 168, 76, 0.25);
+  }
+
+  .feedback {
+    font-size: 0.72rem;
+    color: #80c060;
+    text-align: center;
+    transition: opacity 0.3s;
+  }
+
+  .feedback.hidden {
+    opacity: 0;
+  }
+
+  .help {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(201, 168, 76, 0.1);
+  }
+
+  .help ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .help li {
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: #c4b99a;
+    line-height: 1.5;
+  }
+
+  .help li strong {
+    color: #f5efe0;
+    font-weight: 400;
+  }
+
+  .canvas-area {
+    flex: 1;
+    position: relative;
+    background: #072e2c;
+    overflow: hidden;
+  }
+
+  #editor-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: crosshair;
+  }
+</style>
+
+<script>
+  import '../scripts/editor';
+</script>

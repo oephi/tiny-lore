@@ -242,10 +242,24 @@ function drawConstellation(c: Constellation) {
     worldToScreen(c.center.x + sx, c.center.y + sy)
   );
 
-  // Glow behind constellation
+  // Glow behind constellation — centered on star centroid, sized to contain all stars
   if (glowAmount > 0.05) {
-    const [cx, cy] = worldToScreen(c.center.x, c.center.y);
-    const glowRadius = 140 * camera.zoom * glowAmount;
+    // Compute centroid of stars in world space
+    let avgX = 0, avgY = 0;
+    for (const [sx, sy] of c.stars) { avgX += sx; avgY += sy; }
+    avgX = c.center.x + avgX / c.stars.length;
+    avgY = c.center.y + avgY / c.stars.length;
+
+    // Compute max distance from centroid to any star
+    let maxDist = 0;
+    for (const [sx, sy] of c.stars) {
+      const dx = (c.center.x + sx) - avgX;
+      const dy = (c.center.y + sy) - avgY;
+      maxDist = Math.max(maxDist, Math.sqrt(dx * dx + dy * dy));
+    }
+
+    const [cx, cy] = worldToScreen(avgX, avgY);
+    const glowRadius = (maxDist + 60) * camera.zoom * glowAmount;
     const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, glowRadius);
     gradient.addColorStop(0, hexToRgba(c.color, 0.15 * glowAmount));
     gradient.addColorStop(0.5, hexToRgba(c.color, 0.06 * glowAmount));
@@ -295,23 +309,60 @@ function drawConstellation(c: Constellation) {
   }
 }
 
+function convexHull(points: [number, number][]): [number, number][] {
+  const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  if (pts.length <= 2) return pts;
+
+  const cross = (o: [number, number], a: [number, number], b: [number, number]) =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+  const lower: [number, number][] = [];
+  for (const p of pts) {
+    while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
+      lower.pop();
+    lower.push(p);
+  }
+
+  const upper: [number, number][] = [];
+  for (let i = pts.length - 1; i >= 0; i--) {
+    while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], pts[i]) <= 0)
+      upper.pop();
+    upper.push(pts[i]);
+  }
+
+  lower.pop();
+  upper.pop();
+  return lower.concat(upper);
+}
+
 function drawConstellationFill(c: Constellation, screenStars: [number, number][], progress: number) {
   if (screenStars.length < 3) return;
   ctx.save();
 
-  const [cx, cy] = worldToScreen(c.center.x, c.center.y);
-  const sorted = [...screenStars].sort((a, b) => {
-    return Math.atan2(a[1] - cy, a[0] - cx) - Math.atan2(b[1] - cy, b[0] - cx);
-  });
+  const hull = convexHull(screenStars);
+
+  // Compute centroid of hull
+  let cx = 0, cy = 0;
+  for (const [sx, sy] of hull) { cx += sx; cy += sy; }
+  cx /= hull.length;
+  cy /= hull.length;
+
+  // Max distance from centroid to any star
+  let maxDist = 0;
+  for (const [sx, sy] of screenStars) {
+    const dist = Math.sqrt((sx - cx) ** 2 + (sy - cy) ** 2);
+    maxDist = Math.max(maxDist, dist);
+  }
 
   ctx.beginPath();
-  ctx.moveTo(sorted[0][0], sorted[0][1]);
-  for (let i = 1; i < sorted.length; i++) {
-    ctx.lineTo(sorted[i][0], sorted[i][1]);
+  ctx.moveTo(hull[0][0], hull[0][1]);
+  for (let i = 1; i < hull.length; i++) {
+    ctx.lineTo(hull[i][0], hull[i][1]);
   }
   ctx.closePath();
 
-  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, 150 * camera.zoom);
+  const gradRadius = maxDist + 30 * camera.zoom;
+  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, gradRadius);
   gradient.addColorStop(0, hexToRgba(c.color, 0.2 * progress));
   gradient.addColorStop(0.6, hexToRgba(c.color, 0.08 * progress));
   gradient.addColorStop(1, 'transparent');
