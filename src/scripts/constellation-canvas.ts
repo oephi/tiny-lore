@@ -41,6 +41,7 @@ let cameraStart = { x: 0, y: 0 };
 let mouseScreen = { x: -9999, y: -9999 };
 let hoveredConstellation: Constellation | null = null;
 let interacted = false;
+const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 let transitioning = false;
 let transitionTarget: Constellation | null = null;
 let transitionProgress = 0;
@@ -159,14 +160,16 @@ canvas.addEventListener('wheel', (e) => {
 // ── Touch pinch zoom ──
 let lastPinchDist = 0;
 canvas.addEventListener('touchstart', (e) => {
+  e.preventDefault();
   if (e.touches.length === 2) {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
     lastPinchDist = Math.sqrt(dx * dx + dy * dy);
   }
-}, { passive: true });
+}, { passive: false });
 
 canvas.addEventListener('touchmove', (e) => {
+  e.preventDefault();
   if (e.touches.length === 2) {
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -177,7 +180,7 @@ canvas.addEventListener('touchmove', (e) => {
     }
     lastPinchDist = dist;
   }
-}, { passive: true });
+}, { passive: false });
 
 canvas.addEventListener('touchend', () => { lastPinchDist = 0; }, { passive: true });
 
@@ -394,16 +397,37 @@ function drawNebulae() {
   }
 }
 
+function getMobileClosest(): Constellation | null {
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  const radius = Math.min(w, h) * 0.35;
+  let closest: Constellation | null = null;
+  let closestDist = Infinity;
+
+  for (const c of constellations) {
+    const [sx, sy] = worldToScreen(c.center.x, c.center.y);
+    const dx = sx - w / 2;
+    const dy = sy - h / 2;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < radius && dist < closestDist) {
+      closest = c;
+      closestDist = dist;
+    }
+  }
+  return closest;
+}
+
 function updateLabel() {
-  if (hoveredConstellation) {
+  const active = isMobile ? getMobileClosest() : hoveredConstellation;
+  if (active) {
     const [sx, sy] = worldToScreen(
-      hoveredConstellation.center.x,
-      hoveredConstellation.center.y - 120
+      active.center.x,
+      active.center.y - 120
     );
     label.style.left = sx + 'px';
     label.style.top = sy + 'px';
-    labelName.textContent = hoveredConstellation.name;
-    labelSub.textContent = hoveredConstellation.subtitle;
+    labelName.textContent = active.name;
+    labelSub.textContent = active.subtitle;
     label.classList.remove('hidden');
   } else {
     label.classList.add('hidden');
@@ -507,7 +531,20 @@ function frame() {
 
     // Update reveal progress
     for (const c of constellations) {
-      const target = hoveredConstellation?.id === c.id ? 1 : 0;
+      let target: number;
+      if (isMobile) {
+        // On mobile, reveal constellations near the center of the screen
+        const [sx, sy] = worldToScreen(c.center.x, c.center.y);
+        const w = canvas.width / devicePixelRatio;
+        const h = canvas.height / devicePixelRatio;
+        const dx = sx - w / 2;
+        const dy = sy - h / 2;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const radius = Math.min(w, h) * 0.35;
+        target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
+      } else {
+        target = hoveredConstellation?.id === c.id ? 1 : 0;
+      }
       revealProgress[c.id] += (target - revealProgress[c.id]) * REVEAL_SPEED;
     }
   }
