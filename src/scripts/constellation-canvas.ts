@@ -409,24 +409,24 @@ function updateLabel() {
 }
 
 // ── Transition ──
-// Phase 1 (0–0.4):   Center constellation, highlight it, fade everything else
-// Phase 2 (0.4–0.85): Slowly zoom into the constellation
-// Phase 3 (0.85–1):   Final color wash, then navigate
+// Continuous accelerating zoom through the constellation.
+// Stars fade, color washes in, story page emerges from the "distance".
+
+let navigated = false;
 
 function startTransition(c: Constellation) {
   transitioning = true;
   transitionTarget = c;
   transitionProgress = 0;
   transitionFade = 0;
+  navigated = false;
 
-  // Hide label, hint, and branding
   label.classList.add('hidden');
   hint.style.opacity = '0';
   canvas.style.cursor = 'default';
   const brand = document.getElementById('brand');
   if (brand) brand.style.opacity = '0';
 
-  // Create fade overlay (used in phase 3)
   fadeOverlay = document.createElement('div');
   fadeOverlay.style.cssText = `
     position: fixed; inset: 0; z-index: 100;
@@ -439,66 +439,51 @@ function startTransition(c: Constellation) {
   // Eagerly fetch the story page so it's cached when we navigate
   fetch(`/constellations/${c.id}`).catch(() => {});
 
-  // Phase 1 target: center on constellation at a comfortable zoom
   targetCamera.x = c.center.x;
   targetCamera.y = c.center.y;
-  targetCamera.zoom = 1.8;
 }
 
 function updateTransition() {
   if (!transitioning || !transitionTarget || !fadeOverlay) return;
 
-  transitionProgress += 0.005;
+  // Accelerating progress — starts slow, speeds up
+  transitionProgress += 0.003 + transitionProgress * 0.008;
+  transitionProgress = Math.min(transitionProgress, 1);
 
-  // Keep the clicked constellation fully lit
   revealProgress[transitionTarget.id] = 1;
 
-  if (transitionProgress < 0.55) {
-    // Phase 1: Pan to center, fade out everything else
-    const p = transitionProgress / 0.55; // 0–1 within phase
-    const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+  // Continuously accelerating zoom — never stops
+  const zoomEase = Math.pow(transitionProgress, 2.2);
+  const targetZoom = 0.45 + zoomEase * 30;
+  camera.zoom += (targetZoom - camera.zoom) * 0.04;
 
-    camera.x += (targetCamera.x - camera.x) * (0.015 + ease * 0.035);
-    camera.y += (targetCamera.y - camera.y) * (0.015 + ease * 0.035);
-    camera.zoom += (targetCamera.zoom - camera.zoom) * (0.015 + ease * 0.035);
+  // Pan to center — fast approach that locks on
+  const panSpeed = 0.02 + transitionProgress * 0.08;
+  camera.x += (targetCamera.x - camera.x) * panSpeed;
+  camera.y += (targetCamera.y - camera.y) * panSpeed;
 
-    transitionFade = ease;
+  // Fade out everything else (stars, nebulae, other constellations)
+  const fadeCurve = Math.min(1, transitionProgress * 2.5);
+  transitionFade = 1 - Math.pow(1 - fadeCurve, 2);
 
-    // Fade other constellations out
-    for (const c of constellations) {
-      if (c.id !== transitionTarget.id) {
-        revealProgress[c.id] *= 0.93;
-      }
+  for (const c of constellations) {
+    if (c.id !== transitionTarget.id) {
+      revealProgress[c.id] *= 0.92;
     }
-  } else if (transitionProgress < 0.85) {
-    // Phase 2: Slowly zoom deeper into the constellation
-    const p = (transitionProgress - 0.55) / 0.3; // 0–1 within phase
-    const ease = p * p; // ease-in quadratic — accelerating zoom
+  }
 
-    transitionFade = 1;
+  // Color wash overlay fades in during the second half
+  const overlayStart = 0.4;
+  if (transitionProgress > overlayStart) {
+    const p = (transitionProgress - overlayStart) / (1 - overlayStart);
+    const overlayAlpha = Math.pow(p, 1.5);
+    fadeOverlay.style.opacity = String(overlayAlpha);
+  }
 
-    // Ramp zoom target up gradually
-    targetCamera.zoom = 1.8 + ease * 8;
-    camera.x += (targetCamera.x - camera.x) * 0.08;
-    camera.y += (targetCamera.y - camera.y) * 0.08;
-    camera.zoom += (targetCamera.zoom - camera.zoom) * 0.06;
-  } else {
-    // Phase 3: Color wash and navigate
-    const p = Math.min(1, (transitionProgress - 0.85) / 0.15);
-    const ease = p * p;
-
-    transitionFade = 1;
-    fadeOverlay.style.opacity = String(ease);
-
-    // Keep zooming
-    camera.zoom += (targetCamera.zoom - camera.zoom) * 0.06;
-    camera.x += (targetCamera.x - camera.x) * 0.08;
-    camera.y += (targetCamera.y - camera.y) * 0.08;
-
-    // Navigate early — page loads behind the opaque overlay
-    if (p >= 0.7) {
-      window.location.href = `/constellations/${transitionTarget.id}`;
-    }
+  // Navigate once overlay is opaque enough to hide the page swap
+  if (transitionProgress > 0.7 && !navigated) {
+    navigated = true;
+    window.location.href = `/constellations/${transitionTarget.id}`;
   }
 }
 

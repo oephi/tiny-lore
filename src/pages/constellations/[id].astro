@@ -48,7 +48,7 @@ const { name, subtitle, color } = entry.data;
     z-index: 50;
     pointer-events: none;
     background: radial-gradient(circle at 50% 50%, var(--accent), #072e2c);
-    animation: entrance-fade 1.2s ease-out 0.1s forwards;
+    animation: entrance-fade 1.6s ease-in-out 0.2s forwards;
   }
 
   @keyframes entrance-fade {
@@ -61,12 +61,13 @@ const { name, subtitle, color } = entry.data;
     overflow-y: auto;
     background: #072e2c;
     padding: 2rem;
-    animation: content-rise 1s ease-out 0.2s both;
+    animation: content-emerge 1.4s ease-out 0.3s both;
   }
 
-  @keyframes content-rise {
-    0%   { opacity: 0; transform: translateY(30px); }
-    100% { opacity: 1; transform: translateY(0); }
+  @keyframes content-emerge {
+    0%   { opacity: 0; transform: scale(0.92) translateY(40px); }
+    60%  { opacity: 1; transform: scale(1) translateY(8px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
   }
 
   .back-link {
