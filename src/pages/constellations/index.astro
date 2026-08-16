@@ -1,0 +1,57 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ConstellationCanvas from '../../components/ConstellationCanvas.astro';
+---
+
+<Layout>
+  <div class="page-fade"></div>
+  <ConstellationCanvas />
+
+  <header id="brand">
+    <h1 class="brand-title">Tiny Lore</h1>
+    <p class="brand-sub">Little Stories for Children</p>
+  </header>
+</Layout>
+
+<style>
+  .page-fade {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    background: #072e2c;
+    pointer-events: none;
+    animation: fade-out 1.5s ease-out forwards;
+  }
+
+  @keyframes fade-out {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  #brand {
+    position: fixed;
+    top: 2rem;
+    left: 2.5rem;
+    z-index: 20;
+    pointer-events: none;
+  }
+
+  .brand-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.3rem;
+    font-weight: 400;
+    color: #f5efe0;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 30px rgba(201, 168, 76, 0.25);
+  }
+
+  .brand-sub {
+    font-size: 0.5rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.5;
+    margin-top: 0.15rem;
+  }
+</style>

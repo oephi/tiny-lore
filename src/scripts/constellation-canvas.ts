@@ -33,8 +33,8 @@ const labelName = label.querySelector('.label-name') as HTMLElement;
 const labelSub = label.querySelector('.label-subtitle') as HTMLElement;
 const hint = document.getElementById('hint')!;
 
-let camera = { x: 0, y: 0, zoom: 0.7 };
-let targetCamera = { x: 0, y: 0, zoom: 0.7 };
+let camera = { x: 0, y: 0, zoom: 0.45 };
+let targetCamera = { x: 0, y: 0, zoom: 0.45 };
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
 let cameraStart = { x: 0, y: 0 };
@@ -388,7 +388,7 @@ function startTransition(c: Constellation) {
   // Prefetch the story page so it's ready when the animation finishes
   const prefetchLink = document.createElement('link');
   prefetchLink.rel = 'prefetch';
-  prefetchLink.href = `/stories/${c.id}`;
+  prefetchLink.href = `/constellations/${c.id}`;
   document.head.appendChild(prefetchLink);
 
   // Phase 1 target: center on constellation at a comfortable zoom
@@ -449,7 +449,7 @@ function updateTransition() {
 
     // Navigate as soon as overlay is opaque
     if (p >= 1) {
-      window.location.href = `/stories/${transitionTarget.id}`;
+      window.location.href = `/constellations/${transitionTarget.id}`;
     }
   }
 }
