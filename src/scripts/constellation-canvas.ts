@@ -125,6 +125,8 @@ canvas.addEventListener('pointerup', (e) => {
     const dy = e.clientY - dragStart.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 5) {
+      // Update mouseScreen so getHoveredConstellation works on touch (no pointermove on tap)
+      mouseScreen = { x: e.clientX, y: e.clientY };
       const hovered = getHoveredConstellation();
       if (hovered) {
         startTransition(hovered);
