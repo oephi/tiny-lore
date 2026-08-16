@@ -42,7 +42,9 @@ let mouseScreen = { x: -9999, y: -9999 };
 let hoveredConstellation: Constellation | null = null;
 let interacted = false;
 const isMobile = !window.matchMedia('(pointer: fine)').matches;
-let introActive = true;
+const hasVisited = sessionStorage.getItem('tiny-lore-visited');
+let introActive = !hasVisited;
+if (!hasVisited) sessionStorage.setItem('tiny-lore-visited', '1');
 let introTimer = 0;
 const INTRO_GLOW_DURATION = 3.5; // seconds (matches CSS animation)
 let transitioning = false;
@@ -50,6 +52,11 @@ let transitionTarget: Constellation | null = null;
 let transitionProgress = 0;
 let transitionFade = 0; // 0-1, how much non-target elements have faded
 let fadeOverlay: HTMLDivElement | null = null;
+
+if (!introActive) {
+  const overlay = document.getElementById('intro-overlay');
+  if (overlay) overlay.style.display = 'none';
+}
 
 // Per-constellation reveal progress (0 = dim, 1 = bright)
 const revealProgress: Record<string, number> = {};
