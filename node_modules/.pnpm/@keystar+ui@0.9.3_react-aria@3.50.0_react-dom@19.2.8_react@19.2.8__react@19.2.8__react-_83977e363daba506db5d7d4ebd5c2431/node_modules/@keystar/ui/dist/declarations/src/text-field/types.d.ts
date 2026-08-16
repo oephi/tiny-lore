@@ -1,0 +1,38 @@
+import { HTMLAttributes, InputHTMLAttributes, LabelHTMLAttributes, ReactElement, TextareaHTMLAttributes } from 'react';
+import type { AriaTextFieldProps } from 'react-aria/useTextField';
+import { FieldProps } from "../../dist/keystar-ui-field.js";
+import { Conditional } from "../../dist/keystar-ui-types.js";
+export type TextFieldProps<T extends HTMLInputElement | HTMLTextAreaElement = HTMLInputElement> = {
+    /** Identifies the currently active element when DOM focus is on a composite widget, textbox, group, or application. */
+    'aria-activedescendant'?: string;
+    /**
+     * Indicates whether inputting text could trigger display of one or more predictions of the user's intended value for an input and specifies how predictions would be
+     * presented if they are made.
+     */
+    'aria-autocomplete'?: 'none' | 'inline' | 'list' | 'both';
+    /**
+     * Identifies the element that provides an error message for the object.
+     */
+    'aria-errormessage'?: string;
+    /** Indicates the availability and type of interactive popup element, such as menu or dialog, that can be triggered by an element. */
+    'aria-haspopup'?: boolean | 'false' | 'true' | 'menu' | 'listbox' | 'tree' | 'grid' | 'dialog';
+    /** Element to display before the input. */
+    startElement?: Conditional<ReactElement>;
+    /** Element to display after the input. */
+    endElement?: Conditional<ReactElement>;
+} & FieldProps & Omit<AriaTextFieldProps<T>, keyof FieldProps>;
+export type TextAreaProps = Omit<TextFieldProps<HTMLTextAreaElement>, 'pattern' | 'type' | 'startElement' | 'endElement'>;
+export type TextFieldPrimitiveProps = (TextFieldProps | TextAreaProps) & {
+    /**
+     * When true, text will wrap onto multiple lines using a `textarea` instead of
+     * the traditional `input` element.
+     */
+    isMultiline?: boolean;
+    startElement?: Conditional<ReactElement>;
+    endElement?: Conditional<ReactElement>;
+    labelProps?: LabelHTMLAttributes<HTMLLabelElement>;
+    inputProps: InputHTMLAttributes<HTMLInputElement> | TextareaHTMLAttributes<HTMLTextAreaElement>;
+    descriptionProps?: HTMLAttributes<HTMLElement>;
+    errorMessageProps?: HTMLAttributes<HTMLElement>;
+    inputWrapperProps?: HTMLAttributes<HTMLElement>;
+};
