@@ -35,6 +35,8 @@ const storyInput = document.getElementById('story') as HTMLTextAreaElement;
 const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
 const saveFeedback = document.getElementById('save-feedback')!;
+const deleteBtn = document.getElementById('btn-delete')!;
+let currentLoadedId = '';
 
 const modeStarBtn = document.getElementById('mode-star')!;
 const modeLineBtn = document.getElementById('mode-line')!;
@@ -293,6 +295,32 @@ ${story}
   });
 });
 
+// Delete
+deleteBtn.addEventListener('click', async () => {
+  if (!currentLoadedId) return;
+  if (!confirm(`Delete "${nameInput.value || currentLoadedId}"? This cannot be undone.`)) return;
+
+  try {
+    const res = await fetch('/api/delete-constellation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: currentLoadedId }),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      showFeedback(`Deleted ${result.slug}.md`);
+      // Reset to new constellation state
+      loadConstellation('');
+      // Remove the load button for deleted constellation
+      document.querySelector(`.load-btn[data-id="${currentLoadedId}"]`)?.remove();
+    } else {
+      showFeedback(result.error || 'Delete failed.', true);
+    }
+  } catch (err) {
+    showFeedback('Network error.', true);
+  }
+});
+
 function updateCounts() {
   starCount.textContent = `Stars: ${stars.length}`;
   lineCount.textContent = `Lines: ${lines.length}`;
@@ -301,6 +329,9 @@ function updateCounts() {
 
 // Load existing constellation
 function loadConstellation(id: string) {
+  currentLoadedId = id;
+  deleteBtn.classList.toggle('hidden', !id);
+
   const c = existingData.find((e) => e.id === id);
   if (!c) {
     stars = [];

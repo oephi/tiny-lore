@@ -90,6 +90,7 @@ const existing = entries.map((e) => ({
         <button id="btn-clear" class="action-btn">Clear All</button>
         <button id="btn-save" class="action-btn primary">Save Constellation</button>
         <button id="btn-export" class="action-btn">Copy Markdown</button>
+        <button id="btn-delete" class="action-btn danger hidden">Delete Constellation</button>
       </div>
 
       <div id="save-feedback" class="feedback hidden"></div>
@@ -347,6 +348,21 @@ const existing = entries.map((e) => ({
 
   .action-btn.primary:hover {
     background: rgba(201, 168, 76, 0.25);
+  }
+
+  .action-btn.danger {
+    border-color: rgba(224, 96, 80, 0.4);
+    color: #e06050;
+    flex-basis: 100%;
+  }
+
+  .action-btn.danger:hover {
+    background: rgba(224, 96, 80, 0.15);
+    border-color: #e06050;
+  }
+
+  .hidden {
+    display: none !important;
   }
 
   .feedback {
