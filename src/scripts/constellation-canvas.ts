@@ -2,8 +2,8 @@ interface Constellation {
   id: string;
   name: string;
   subtitle: string;
-  stars: [number, number][];
-  lines: [number, number][];
+  stars: { x: number; y: number }[];
+  lines: { from: number; to: number }[];
   center: { x: number; y: number };
   color: string;
 }
@@ -238,23 +238,23 @@ function drawConstellation(c: Constellation) {
   const starAlpha = (STAR_ALPHA_DIM + (STAR_ALPHA_BRIGHT - STAR_ALPHA_DIM) * progress) * dimFactor;
   const glowAmount = progress * dimFactor;
 
-  const screenStars: [number, number][] = c.stars.map(([sx, sy]) =>
-    worldToScreen(c.center.x + sx, c.center.y + sy)
+  const screenStars: [number, number][] = c.stars.map((s) =>
+    worldToScreen(c.center.x + s.x, c.center.y + s.y)
   );
 
   // Glow behind constellation — centered on star centroid, sized to contain all stars
   if (glowAmount > 0.05) {
     // Compute centroid of stars in world space
     let avgX = 0, avgY = 0;
-    for (const [sx, sy] of c.stars) { avgX += sx; avgY += sy; }
+    for (const s of c.stars) { avgX += s.x; avgY += s.y; }
     avgX = c.center.x + avgX / c.stars.length;
     avgY = c.center.y + avgY / c.stars.length;
 
     // Compute max distance from centroid to any star
     let maxDist = 0;
-    for (const [sx, sy] of c.stars) {
-      const dx = (c.center.x + sx) - avgX;
-      const dy = (c.center.y + sy) - avgY;
+    for (const s of c.stars) {
+      const dx = (c.center.x + s.x) - avgX;
+      const dy = (c.center.y + s.y) - avgY;
       maxDist = Math.max(maxDist, Math.sqrt(dx * dx + dy * dy));
     }
 
@@ -273,10 +273,10 @@ function drawConstellation(c: Constellation) {
   ctx.lineWidth = 1 + progress * 0.5;
   ctx.lineCap = 'round';
 
-  for (const [a, b] of c.lines) {
-    if (a >= screenStars.length || b >= screenStars.length) continue;
-    const [x1, y1] = screenStars[a];
-    const [x2, y2] = screenStars[b];
+  for (const line of c.lines) {
+    if (line.from >= screenStars.length || line.to >= screenStars.length) continue;
+    const [x1, y1] = screenStars[line.from];
+    const [x2, y2] = screenStars[line.to];
     ctx.beginPath();
     ctx.moveTo(x1, y1);
     ctx.lineTo(x2, y2);

@@ -1,0 +1,135 @@
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Generated 0ms","label":"types","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Syncing content","label":"content","level":"info"}
+{"message":"Astro config changed","label":"content","level":"info"}
+{"message":"Astro version changed","label":"content","level":"info"}
+{"message":"Clearing content store","label":"content","level":"info"}
+{"message":"Synced content","label":"content","level":"info"}
+{"message":"Re-optimizing dependencies because vite config has changed","label":"vite","level":"info"}
+{"message":" astro  v7.2.2 ready in 867 ms\n┃ Local    http://127.0.0.1:4321/","label":"SKIP_FORMAT","level":"info"}
+{"message":"watching for file changes...","label":null,"level":"info"}
+{"message":"[200] /keystatic 12ms","label":null,"level":"info"}
+{"message":"[200] /constellations 22ms","label":null,"level":"info"}
+{"message":"[200] /constellations 15ms","label":null,"level":"info"}
+{"message":"[200] /constellations 5ms","label":null,"level":"info"}
+{"message":"[200] / 8ms","label":null,"level":"info"}
+{"message":"[200] /keystatic 4ms","label":null,"level":"info"}
+{"message":"[200] /api/keystatic/tree 16ms","label":null,"level":"info"}
+{"message":"[200] /api/keystatic/blob/32a9e7ad9054b69be928d8811ce0bec65f25ac16/src/content/constellations/bear.md 4ms","label":null,"level":"info"}
+{"message":"[200] /api/keystatic/blob/deb9f45d342a633825f75b2be482fbf12fa98387/src/content/constellations/goat.md 2ms","label":null,"level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":"[200] /keystatic/collection/constellations/item/goat 5ms","label":null,"level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/editor/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":"[200] /api/keystatic/tree 6ms","label":null,"level":"info"}
+{"message":"[200] /api/keystatic/blob/deb9f45d342a633825f75b2be482fbf12fa98387/src/content/constellations/goat.md 1ms","label":null,"level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/editor/index.html","label":"watch","level":"info"}
+{"message":"[200] /editor 8ms","label":null,"level":"info"}
+{"message":"[200] POST /api/save-constellation 4ms","label":null,"level":"info"}
+{"message":"Reloaded data from goat.md","label":"glob-loader","level":"info"}
+{"message":"[200] /editor 7ms","label":null,"level":"info"}
+{"message":"[200] / 4ms","label":null,"level":"info"}
+{"message":"[200] /constellations 9ms","label":null,"level":"info"}
+{"message":"[200] /constellations/goat 10ms","label":null,"level":"info"}
+{"message":"[200] /constellations/goat 5ms","label":null,"level":"info"}
+{"message":"[200] /constellations 5ms","label":null,"level":"info"}
+{"message":"[200] /constellations/lake 5ms","label":null,"level":"info"}
+{"message":"[200] /constellations/lake 3ms","label":null,"level":"info"}
+{"message":"[200] POST /api/save-constellation 1ms","label":null,"level":"info"}
+{"message":"Reloaded data from test-save.md","label":"glob-loader","level":"info"}
+{"message":"Reloaded data from test-save.md","label":"glob-loader","level":"info"}
+{"message":"[200] /constellations/lake 3ms","label":null,"level":"info"}
+{"message":"[200] /constellations/lake 3ms","label":null,"level":"info"}
+{"message":"[200] /editor 4ms","label":null,"level":"info"}
+{"message":"[200] /editor 2ms","label":null,"level":"info"}
+{"message":"[200] /constellations/lake 4ms","label":null,"level":"info"}
+{"message":"src/scripts/editor.ts","label":"watch","level":"info"}
+{"message":"[200] /constellations/lake 3ms","label":null,"level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/editor/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":"[200] /constellations/lake 16ms","label":null,"level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/editor/index.html","label":"watch","level":"info"}
+{"message":"[200] POST /api/save-constellation 1ms","label":null,"level":"info"}
+{"message":"[200] /constellations/lake 5ms","label":null,"level":"info"}
+{"message":"Configuration file updated. Restarting...","label":null,"level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because lockfile has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":"Configuration file updated. Restarting...","label":null,"level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"connected.","label":"vite","level":"info"}
+{"message":"Re-optimizing dependencies because lockfile has changed","label":"vite","level":"info"}
+{"message":"server restarted.","label":"vite","level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/editor/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/tree/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/sun/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/fox/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/bear/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/owl/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/whale/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/goat/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/lake/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/dragon/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/constellations/rabbit/index.html","label":"watch","level":"info"}
+{"message":".vercel/output/static/index.html","label":"watch","level":"info"}
+{"message":"[200] /editor 35ms","label":null,"level":"info"}

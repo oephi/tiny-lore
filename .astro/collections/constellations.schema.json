@@ -1,80 +1,77 @@
 {
-  "$ref": "#/definitions/constellations",
-  "definitions": {
-    "constellations": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string"
+    },
+    "color": {
+      "type": "string"
+    },
+    "center": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
+        "x": {
+          "type": "number"
         },
-        "subtitle": {
-          "type": "string"
-        },
-        "color": {
-          "type": "string"
-        },
-        "center": {
-          "type": "object",
-          "properties": {
-            "x": {
-              "type": "number"
-            },
-            "y": {
-              "type": "number"
-            }
-          },
-          "required": [
-            "x",
-            "y"
-          ],
-          "additionalProperties": false
-        },
-        "stars": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "minItems": 2,
-            "maxItems": 2,
-            "items": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          }
-        },
-        "lines": {
-          "type": "array",
-          "items": {
-            "type": "array",
-            "minItems": 2,
-            "maxItems": 2,
-            "items": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "number"
-              }
-            ]
-          }
-        },
-        "$schema": {
-          "type": "string"
+        "y": {
+          "type": "number"
         }
       },
       "required": [
-        "name",
-        "subtitle",
-        "color",
-        "center",
-        "stars",
-        "lines"
-      ],
-      "additionalProperties": false
+        "x",
+        "y"
+      ]
+    },
+    "stars": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y"
+        ]
+      }
+    },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "from": {
+            "type": "number"
+          },
+          "to": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ]
+      }
+    },
+    "$schema": {
+      "type": "string"
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "required": [
+    "name",
+    "subtitle",
+    "color",
+    "center",
+    "stars",
+    "lines"
+  ]
 }

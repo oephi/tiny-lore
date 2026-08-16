@@ -2,9 +2,37 @@
 name: The Ancient Tree
 subtitle: Root of All Stories
 color: "#60a050"
-center: { x: 200, y: 600 }
-stars: [[0, -100], [-50, -50], [55, -45], [0, -10], [0, 70], [-30, 100], [35, 95]]
-lines: [[0, 3], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6]]
+center:
+  x: 200
+  y: 600
+stars:
+  - x: 0
+    y: -100
+  - x: -50
+    y: -50
+  - x: 55
+    y: -45
+  - x: 0
+    y: -10
+  - x: 0
+    y: 70
+  - x: -30
+    y: 100
+  - x: 35
+    y: 95
+lines:
+  - from: 0
+    to: 3
+  - from: 1
+    to: 3
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 4
+    to: 5
+  - from: 4
+    to: 6
 ---
 
 The oldest tree in the forest had been alive so long it had forgotten its own name. It had watched rivers change their minds about which way to flow. It had seen mountains grow tired and sit down.

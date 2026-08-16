@@ -2,9 +2,41 @@
 name: The Bear
 subtitle: Guardian of the Forest
 color: "#b08040"
-center: { x: 0, y: 0 }
-stars: [[-80, -60], [-40, -80], [30, -70], [70, -40], [110, -55], [90, -75], [-60, 20], [50, 10]]
-lines: [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5], [0, 6], [2, 7]]
+center:
+  x: 0
+  y: 0
+stars:
+  - x: -80
+    y: -60
+  - x: -40
+    y: -80
+  - x: 30
+    y: -70
+  - x: 70
+    y: -40
+  - x: 110
+    y: -55
+  - x: 90
+    y: -75
+  - x: -60
+    y: 20
+  - x: 50
+    y: 10
+lines:
+  - from: 0
+    to: 1
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 3
+    to: 5
+  - from: 0
+    to: 6
+  - from: 2
+    to: 7
 ---
 
 Deep in the oldest part of the forest, where the trees grew so tall their tops disappeared into clouds, there lived a bear with fur the colour of autumn leaves.

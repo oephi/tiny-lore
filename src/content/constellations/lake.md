@@ -2,9 +2,41 @@
 name: The Lake
 subtitle: Mirror of Dreams
 color: "#4090c0"
-center: { x: -700, y: 300 }
-stars: [[-90, -15], [-30, -40], [40, -35], [95, -10], [50, 30], [-45, 35], [0, 5]]
-lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [1, 6], [6, 2]]
+center:
+  x: -700
+  y: 300
+stars:
+  - x: -90
+    y: -15
+  - x: -30
+    y: -40
+  - x: 40
+    y: -35
+  - x: 95
+    y: -10
+  - x: 50
+    y: 30
+  - x: -45
+    y: 35
+  - x: 0
+    y: 5
+lines:
+  - from: 0
+    to: 1
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 4
+    to: 5
+  - from: 5
+    to: 0
+  - from: 1
+    to: 6
+  - from: 6
+    to: 2
 ---
 
 There was a lake so still that the sky forgot where it ended and the water began.

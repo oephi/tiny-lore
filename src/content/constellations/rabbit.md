@@ -2,9 +2,33 @@
 name: The Rabbit
 subtitle: Leaper Between Worlds
 color: "#c0a0d0"
-center: { x: -900, y: -200 }
-stars: [[-10, -120], [0, -60], [10, -20], [-20, 40], [30, 50], [-10, 70]]
-lines: [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5]]
+center:
+  x: -900
+  y: -200
+stars:
+  - x: -10
+    y: -120
+  - x: 0
+    y: -60
+  - x: 10
+    y: -20
+  - x: -20
+    y: 40
+  - x: 30
+    y: 50
+  - x: -10
+    y: 70
+lines:
+  - from: 0
+    to: 1
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 3
+    to: 5
 ---
 
 Everyone knew that rabbits were good at hopping. But this particular rabbit was good at hopping between places that weren't quite there.

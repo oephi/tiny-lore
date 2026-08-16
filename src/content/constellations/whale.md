@@ -2,9 +2,39 @@
 name: The Whale
 subtitle: Singer of Deep Songs
 color: "#5080b8"
-center: { x: -300, y: 700 }
-stars: [[-100, -10], [-50, -30], [20, -25], [80, -15], [110, -40], [105, 15], [-40, 20]]
-lines: [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5], [0, 6], [6, 2]]
+center:
+  x: -300
+  y: 700
+stars:
+  - x: -100
+    y: -10
+  - x: -50
+    y: -30
+  - x: 20
+    y: -25
+  - x: 80
+    y: -15
+  - x: 110
+    y: -40
+  - x: 105
+    y: 15
+  - x: -40
+    y: 20
+lines:
+  - from: 0
+    to: 1
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 3
+    to: 5
+  - from: 0
+    to: 6
+  - from: 6
+    to: 2
 ---
 
 In the deepest part of the ocean, where the water was so dark it was almost a colour no one had invented yet, there lived a whale who sang.

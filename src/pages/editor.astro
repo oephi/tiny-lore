@@ -1,6 +1,17 @@
 ---
+export const prerender = false;
+
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
+import { getSessionFromCookie, isEmailAllowed } from '../lib/auth';
+
+// Auth check in production
+if (import.meta.env.PROD) {
+  const session = getSessionFromCookie(Astro.request.headers.get('Cookie'));
+  if (!session || !isEmailAllowed(session.email)) {
+    return Astro.redirect('/api/auth/login');
+  }
+}
 
 const entries = await getCollection('constellations');
 const existing = entries.map((e) => ({
@@ -11,6 +22,7 @@ const existing = entries.map((e) => ({
   center: e.data.center,
   stars: e.data.stars,
   lines: e.data.lines,
+  body: (e as any).body || '',
 }));
 ---
 
@@ -65,13 +77,19 @@ const existing = entries.map((e) => ({
         <p id="line-count">Lines: 0</p>
       </div>
 
+      <div class="field">
+        <label for="story">Story</label>
+        <textarea id="story" placeholder="Write your story here..."></textarea>
+      </div>
+
       <div class="actions">
         <button id="btn-undo" class="action-btn">Undo</button>
         <button id="btn-clear" class="action-btn">Clear All</button>
-        <button id="btn-export" class="action-btn primary">Copy Markdown</button>
+        <button id="btn-save" class="action-btn primary">Save Constellation</button>
+        <button id="btn-export" class="action-btn">Copy Markdown</button>
       </div>
 
-      <div id="export-feedback" class="feedback hidden">Copied to clipboard!</div>
+      <div id="save-feedback" class="feedback hidden"></div>
 
       <div class="help">
         <h2>How to use</h2>
@@ -178,8 +196,24 @@ const existing = entries.map((e) => ({
     transition: border-color 0.2s;
   }
 
-  .field input[type="text"]:focus {
+  .field input[type="text"]:focus,
+  .field textarea:focus {
     border-color: rgba(201, 168, 76, 0.5);
+  }
+
+  .field textarea {
+    padding: 0.5rem 0.7rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    border-radius: 2px;
+    color: #f5efe0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    outline: none;
+    resize: vertical;
+    min-height: 150px;
+    transition: border-color 0.2s;
   }
 
   .field input[type="color"] {
@@ -296,6 +330,10 @@ const existing = entries.map((e) => ({
     color: #80c060;
     text-align: center;
     transition: opacity 0.3s;
+  }
+
+  .feedback.error {
+    color: #e06050;
   }
 
   .feedback.hidden {

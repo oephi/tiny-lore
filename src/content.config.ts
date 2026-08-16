@@ -8,8 +8,8 @@ const constellations = defineCollection({
     subtitle: z.string(),
     color: z.string(),
     center: z.object({ x: z.number(), y: z.number() }),
-    stars: z.array(z.tuple([z.number(), z.number()])),
-    lines: z.array(z.tuple([z.number(), z.number()])),
+    stars: z.array(z.object({ x: z.number(), y: z.number() })),
+    lines: z.array(z.object({ from: z.number(), to: z.number() })),
   }),
 });
 

@@ -4,8 +4,9 @@ interface ExistingConstellation {
   subtitle: string;
   color: string;
   center: { x: number; y: number };
-  stars: [number, number][];
-  lines: [number, number][];
+  stars: { x: number; y: number }[];
+  lines: { from: number; to: number }[];
+  body: string;
 }
 
 const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
@@ -30,9 +31,10 @@ const nameInput = document.getElementById('name') as HTMLInputElement;
 const subtitleInput = document.getElementById('subtitle') as HTMLInputElement;
 const colorInput = document.getElementById('color') as HTMLInputElement;
 const filenameInput = document.getElementById('filename') as HTMLInputElement;
+const storyInput = document.getElementById('story') as HTMLTextAreaElement;
 const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
-const feedback = document.getElementById('export-feedback')!;
+const saveFeedback = document.getElementById('save-feedback')!;
 
 const modeStarBtn = document.getElementById('mode-star')!;
 const modeLineBtn = document.getElementById('mode-line')!;
@@ -215,30 +217,79 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
   draw();
 });
 
-// Export
+// Save
+function showFeedback(message: string, isError = false) {
+  saveFeedback.textContent = message;
+  saveFeedback.classList.toggle('error', isError);
+  saveFeedback.classList.remove('hidden');
+  setTimeout(() => saveFeedback.classList.add('hidden'), 3000);
+}
+
+document.getElementById('btn-save')!.addEventListener('click', async () => {
+  const name = nameInput.value;
+  const filename = filenameInput.value;
+
+  if (!name || !filename) {
+    showFeedback('Name and filename are required.', true);
+    return;
+  }
+
+  const payload = {
+    filename,
+    name,
+    subtitle: subtitleInput.value,
+    color: colorInput.value,
+    center: { x: centerX, y: centerY },
+    stars: stars.map(([x, y]) => ({ x, y })),
+    lines: lines.map(([a, b]) => ({ from: a, to: b })),
+    story: storyInput.value,
+  };
+
+  try {
+    const res = await fetch('/api/save-constellation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const result = await res.json();
+    if (res.ok) {
+      showFeedback(result.rebuilt
+        ? `Saved ${result.slug}.md — site will rebuild shortly.`
+        : `Saved ${result.slug}.md`);
+    } else {
+      showFeedback(result.error || 'Save failed.', true);
+    }
+  } catch (err) {
+    showFeedback('Network error.', true);
+  }
+});
+
+// Copy Markdown
 document.getElementById('btn-export')!.addEventListener('click', () => {
   const name = nameInput.value || 'Unnamed';
   const subtitle = subtitleInput.value || 'A new constellation';
   const color = colorInput.value;
+  const story = storyInput.value || 'Write your story here.';
 
-  const starsStr = `[${stars.map(([x, y]) => `[${x}, ${y}]`).join(', ')}]`;
-  const linesStr = `[${lines.map(([a, b]) => `[${a}, ${b}]`).join(', ')}]`;
+  const starsStr = stars.map(([x, y]) => `  - x: ${x}\n    y: ${y}`).join('\n');
+  const linesStr = lines.map(([a, b]) => `  - from: ${a}\n    to: ${b}`).join('\n');
 
   const md = `---
 name: ${name}
 subtitle: ${subtitle}
 color: "${color}"
-center: { x: ${centerX}, y: ${centerY} }
-stars: ${starsStr}
-lines: ${linesStr}
+center:
+  x: ${centerX}
+  y: ${centerY}
+${stars.length ? `stars:\n${starsStr}` : 'stars: []'}
+${lines.length ? `lines:\n${linesStr}` : 'lines: []'}
 ---
 
-Write your story here.
+${story}
 `;
 
   navigator.clipboard.writeText(md).then(() => {
-    feedback.classList.remove('hidden');
-    setTimeout(() => feedback.classList.add('hidden'), 2000);
+    showFeedback('Copied to clipboard!');
   });
 });
 
@@ -258,6 +309,7 @@ function loadConstellation(id: string) {
     subtitleInput.value = '';
     colorInput.value = '#c9a84c';
     filenameInput.value = '';
+    storyInput.value = '';
     centerX = 0;
     centerY = 0;
     history = [];
@@ -268,12 +320,13 @@ function loadConstellation(id: string) {
     return;
   }
 
-  stars = c.stars.map((s) => [...s] as [number, number]);
-  lines = c.lines.map((l) => [...l] as [number, number]);
+  stars = c.stars.map((s) => [s.x, s.y] as [number, number]);
+  lines = c.lines.map((l) => [l.from, l.to] as [number, number]);
   nameInput.value = c.name;
   subtitleInput.value = c.subtitle;
   colorInput.value = c.color;
   filenameInput.value = c.id;
+  storyInput.value = c.body.trim();
   centerX = c.center.x;
   centerY = c.center.y;
   history = [];
@@ -429,12 +482,12 @@ function drawMinimap() {
     const cy = h / 2 + c.center.y * scale;
 
     // Draw constellation lines
-    for (const [a, b] of c.lines) {
-      if (a >= c.stars.length || b >= c.stars.length) continue;
-      const x1 = cx + c.stars[a][0] * scale;
-      const y1 = cy + c.stars[a][1] * scale;
-      const x2 = cx + c.stars[b][0] * scale;
-      const y2 = cy + c.stars[b][1] * scale;
+    for (const line of c.lines) {
+      if (line.from >= c.stars.length || line.to >= c.stars.length) continue;
+      const x1 = cx + c.stars[line.from].x * scale;
+      const y1 = cy + c.stars[line.from].y * scale;
+      const x2 = cx + c.stars[line.to].x * scale;
+      const y2 = cy + c.stars[line.to].y * scale;
       minimapCtx.strokeStyle = hexToRgba(c.color, 0.4);
       minimapCtx.lineWidth = 1;
       minimapCtx.beginPath();
@@ -444,9 +497,9 @@ function drawMinimap() {
     }
 
     // Draw constellation stars
-    for (const [sx, sy] of c.stars) {
+    for (const s of c.stars) {
       minimapCtx.beginPath();
-      minimapCtx.arc(cx + sx * scale, cy + sy * scale, 1.5, 0, Math.PI * 2);
+      minimapCtx.arc(cx + s.x * scale, cy + s.y * scale, 1.5, 0, Math.PI * 2);
       minimapCtx.fillStyle = hexToRgba(c.color, 0.7);
       minimapCtx.fill();
     }
@@ -517,7 +570,7 @@ minimap.addEventListener('click', (e) => {
 
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
-  if (e.target instanceof HTMLInputElement) return;
+  if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
   if (e.key === '1') setMode('star');
   if (e.key === '2') setMode('line');
   if (e.key === '3') setMode('delete');

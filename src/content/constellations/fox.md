@@ -2,9 +2,37 @@
 name: The Fox
 subtitle: Finder of the Moon
 color: "#d07030"
-center: { x: -500, y: -500 }
-stars: [[-40, -90], [40, -90], [0, -40], [0, 10], [-30, 60], [60, 50], [30, 35]]
-lines: [[0, 2], [1, 2], [2, 3], [3, 4], [3, 6], [6, 5]]
+center:
+  x: -500
+  y: -500
+stars:
+  - x: -40
+    y: -90
+  - x: 40
+    y: -90
+  - x: 0
+    y: -40
+  - x: 0
+    y: 10
+  - x: -30
+    y: 60
+  - x: 60
+    y: 50
+  - x: 30
+    y: 35
+lines:
+  - from: 0
+    to: 2
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 3
+    to: 6
+  - from: 6
+    to: 5
 ---
 
 The fox woke to find the sky empty. No moon. Not even a sliver.

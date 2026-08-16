@@ -2,9 +2,47 @@
 name: The Sun
 subtitle: Keeper of Warmth
 color: "#e8c840"
-center: { x: 800, y: -400 }
-stars: [[0, -50], [45, -25], [45, 25], [0, 50], [-45, 25], [-45, -25], [0, -100], [85, 0], [-85, 0]]
-lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [0, 6], [1, 7], [5, 8]]
+center:
+  x: 800
+  y: -400
+stars:
+  - x: 0
+    y: -50
+  - x: 45
+    y: -25
+  - x: 45
+    y: 25
+  - x: 0
+    y: 50
+  - x: -45
+    y: 25
+  - x: -45
+    y: -25
+  - x: 0
+    y: -100
+  - x: 85
+    y: 0
+  - x: -85
+    y: 0
+lines:
+  - from: 0
+    to: 1
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 3
+    to: 4
+  - from: 4
+    to: 5
+  - from: 5
+    to: 0
+  - from: 0
+    to: 6
+  - from: 1
+    to: 7
+  - from: 5
+    to: 8
 ---
 
 Once, long before anyone can remember, the sun was shy.

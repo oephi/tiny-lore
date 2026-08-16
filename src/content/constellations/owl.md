@@ -2,9 +2,43 @@
 name: The Owl
 subtitle: Watcher of the Night
 color: "#9070b0"
-center: { x: 400, y: -600 }
-stars: [[-30, -80], [30, -80], [0, -45], [-20, -20], [20, -20], [0, 30], [-40, 70], [40, 70]]
-lines: [[0, 2], [1, 2], [2, 3], [2, 4], [3, 5], [4, 5], [5, 6], [5, 7]]
+center:
+  x: 400
+  y: -600
+stars:
+  - x: -30
+    y: -80
+  - x: 30
+    y: -80
+  - x: 0
+    y: -45
+  - x: -20
+    y: -20
+  - x: 20
+    y: -20
+  - x: 0
+    y: 30
+  - x: -40
+    y: 70
+  - x: 40
+    y: 70
+lines:
+  - from: 0
+    to: 2
+  - from: 1
+    to: 2
+  - from: 2
+    to: 3
+  - from: 2
+    to: 4
+  - from: 3
+    to: 5
+  - from: 4
+    to: 5
+  - from: 5
+    to: 6
+  - from: 5
+    to: 7
 ---
 
 The owl had read every book in the forest. This was not as impressive as it sounds, because there was only one book, and it was written by a beetle who had very strong opinions about bark.
