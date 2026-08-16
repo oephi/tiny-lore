@@ -1,0 +1,101 @@
+---
+import { getCollection } from 'astro:content';
+
+const entries = await getCollection('constellations');
+const constellationData = entries.map((entry) => ({
+  id: entry.id,
+  name: entry.data.name,
+  subtitle: entry.data.subtitle,
+  color: entry.data.color,
+  center: entry.data.center,
+  stars: entry.data.stars,
+  lines: entry.data.lines,
+}));
+---
+
+<div id="constellation-app">
+  <canvas id="sky-canvas"></canvas>
+  <div id="constellation-label" class="label hidden">
+    <span class="label-name"></span>
+    <span class="label-subtitle"></span>
+  </div>
+  <div id="hint">scroll to zoom &middot; drag to explore</div>
+</div>
+
+<script type="application/json" id="constellation-data" set:html={JSON.stringify(constellationData)} />
+
+<style>
+  #constellation-app {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: #072e2c;
+  }
+
+  #sky-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: grab;
+  }
+
+  #sky-canvas:active {
+    cursor: grabbing;
+  }
+
+  .label {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10;
+    text-align: center;
+    transform: translate(-50%, -100%);
+    transition: opacity 0.35s ease;
+    padding-bottom: 12px;
+  }
+
+  .label.hidden {
+    opacity: 0;
+  }
+
+  .label-name {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 400;
+    color: #f5efe0;
+    letter-spacing: 0.05em;
+    text-shadow: 0 0 20px rgba(201, 168, 76, 0.5);
+  }
+
+  .label-subtitle {
+    display: block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  #hint {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Lato', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 300;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 224, 0.25);
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 1.5s ease;
+  }
+</style>
+
+<script>
+  import '../scripts/constellation-canvas';
+</script>
