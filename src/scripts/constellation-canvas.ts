@@ -417,7 +417,7 @@ function getMobileClosest(): Constellation | null {
 }
 
 function updateLabel() {
-  const active = isMobile ? (selectedConstellation || getMobileClosest()) : hoveredConstellation;
+  const active = isMobile ? selectedConstellation : hoveredConstellation;
   if (active) {
     const [sx, sy] = worldToScreen(
       active.center.x,
