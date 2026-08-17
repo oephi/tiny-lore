@@ -40,6 +40,7 @@ let dragStart = { x: 0, y: 0 };
 let cameraStart = { x: 0, y: 0 };
 let mouseScreen = { x: -9999, y: -9999 };
 let hoveredConstellation: Constellation | null = null;
+let selectedConstellation: Constellation | null = null;
 let interacted = false;
 const isMobile = !window.matchMedia('(pointer: fine)').matches;
 const hasVisited = sessionStorage.getItem('tiny-lore-visited');
@@ -136,12 +137,21 @@ canvas.addEventListener('pointerup', (e) => {
     const dy = e.clientY - dragStart.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 5) {
-      // Update mouseScreen so getHoveredConstellation works on touch (no pointermove on tap)
       mouseScreen = { x: e.clientX, y: e.clientY };
-      const hovered = getHoveredConstellation();
-      if (hovered) {
-        startTransition(hovered);
+      const tapped = getHoveredConstellation();
+      if (isMobile) {
+        // First tap selects (highlights + label), second tap on same opens it
+        if (tapped && selectedConstellation?.id === tapped.id) {
+          startTransition(tapped);
+        } else {
+          selectedConstellation = tapped;
+        }
+      } else {
+        if (tapped) startTransition(tapped);
       }
+    } else if (isMobile) {
+      // Dragged — deselect
+      selectedConstellation = null;
     }
   }
   isDragging = false;
@@ -428,7 +438,7 @@ function getMobileClosest(): Constellation | null {
 }
 
 function updateLabel() {
-  const active = isMobile ? getMobileClosest() : hoveredConstellation;
+  const active = isMobile ? (selectedConstellation || getMobileClosest()) : hoveredConstellation;
   if (active) {
     const [sx, sy] = worldToScreen(
       active.center.x,
@@ -558,15 +568,20 @@ function frame() {
       for (const c of constellations) {
         let target: number;
         if (isMobile) {
-          // On mobile, reveal constellations near the center of the screen
-          const [sx, sy] = worldToScreen(c.center.x, c.center.y);
-          const w = canvas.width / devicePixelRatio;
-          const h = canvas.height / devicePixelRatio;
-          const dx = sx - w / 2;
-          const dy = sy - h / 2;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const radius = Math.min(w, h) * 0.35;
-          target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
+          if (selectedConstellation?.id === c.id) {
+            // Tapped constellation gets full highlight
+            target = 1;
+          } else {
+            // Others use proximity-based subtle glow
+            const [sx, sy] = worldToScreen(c.center.x, c.center.y);
+            const w = canvas.width / devicePixelRatio;
+            const h = canvas.height / devicePixelRatio;
+            const dx = sx - w / 2;
+            const dy = sy - h / 2;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const radius = Math.min(w, h) * 0.35;
+            target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
+          }
         } else {
           target = hoveredConstellation?.id === c.id ? 1 : 0;
         }
