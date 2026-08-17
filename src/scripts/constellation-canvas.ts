@@ -1,20 +1,21 @@
 import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type Constellation } from './shared';
 
+// Load constellation data from the embedded JSON element
 const constellations: Constellation[] = JSON.parse(
   document.getElementById('constellation-data')!.textContent!
 );
 
 // ── Constants ──
-const BG_STAR_COUNT = 3000;
-const STAR_RADIUS = 2.2;
-const LINE_ALPHA_DIM = 0.08;
-const LINE_ALPHA_BRIGHT = 0.55;
-const STAR_ALPHA_DIM = 0.2;
-const STAR_ALPHA_BRIGHT = 0.9;
-const HOVER_RADIUS = 120;
-const ZOOM_MIN = 0.25;
-const ZOOM_MAX = 3;
-const REVEAL_SPEED = 0.06;
+const BG_STAR_COUNT = 3000;       // Number of decorative background stars
+const STAR_RADIUS = 2.2;          // Base radius of constellation star dots
+const LINE_ALPHA_DIM = 0.08;      // Line opacity when not highlighted
+const LINE_ALPHA_BRIGHT = 0.55;   // Line opacity when fully highlighted
+const STAR_ALPHA_DIM = 0.2;       // Star opacity when not highlighted
+const STAR_ALPHA_BRIGHT = 0.9;    // Star opacity when fully highlighted
+const HOVER_RADIUS = 120;         // Screen-pixel radius for hover/tap detection
+const ZOOM_MIN = 0.25;            // Minimum zoom level
+const ZOOM_MAX = 3;               // Maximum zoom level
+const REVEAL_SPEED = 0.06;        // Lerp speed for constellation reveal animations
 
 // ── State ──
 const canvas = document.getElementById('sky-canvas') as HTMLCanvasElement;
@@ -24,42 +25,50 @@ const labelName = label.querySelector('.label-name') as HTMLElement;
 const labelSub = label.querySelector('.label-subtitle') as HTMLElement;
 const hint = document.getElementById('hint')!;
 
-let camera = { x: 0, y: 0, zoom: 0.45 };
-let targetCamera = { x: 0, y: 0, zoom: 0.45 };
+let camera = { x: 0, y: 0, zoom: 0.45 };          // Current camera position and zoom
+let targetCamera = { x: 0, y: 0, zoom: 0.45 };    // Target camera (smoothly interpolated toward)
 let isDragging = false;
-let dragStart = { x: 0, y: 0 };
-let cameraStart = { x: 0, y: 0 };
-let mouseScreen = { x: -9999, y: -9999 };
-let hoveredConstellation: Constellation | null = null;
-let selectedConstellation: Constellation | null = null;
-let interacted = false;
+let dragStart = { x: 0, y: 0 };                    // Screen position where drag started
+let cameraStart = { x: 0, y: 0 };                  // Camera position when drag started
+let mouseScreen = { x: -9999, y: -9999 };           // Current mouse/touch screen position
+let hoveredConstellation: Constellation | null = null;   // Desktop: constellation under cursor
+let selectedConstellation: Constellation | null = null;  // Touch: tapped constellation (first tap)
+let interacted = false;                              // True after first user interaction
+
+// Touch device detection: true when no fine pointer (mouse/trackpad) is available
 const isMobile = !window.matchMedia('(pointer: fine)').matches;
+
+// Intro overlay: only shown on first visit per browser session
 const hasVisited = sessionStorage.getItem('tiny-lore-visited');
 let introActive = !hasVisited;
 if (!hasVisited) sessionStorage.setItem('tiny-lore-visited', '1');
 let introTimer = 0;
-const INTRO_GLOW_DURATION = 3.5; // seconds (matches CSS animation)
+const INTRO_GLOW_DURATION = 3.5;
+
+// Transition state: used when zooming into a constellation to open its story page
 let transitioning = false;
 let transitionTarget: Constellation | null = null;
 let transitionProgress = 0;
-let transitionFade = 0; // 0-1, how much non-target elements have faded
+let transitionFade = 0;       // 0–1: how much non-target elements have faded out
 let fadeOverlay: HTMLDivElement | null = null;
 
+// Hide the intro overlay element immediately if already visited
 if (!introActive) {
   const overlay = document.getElementById('intro-overlay');
   if (overlay) overlay.style.display = 'none';
 }
 
-// Per-constellation reveal progress (0 = dim, 1 = bright)
+// Per-constellation reveal progress (0 = dim, 1 = fully bright/highlighted)
 const revealProgress: Record<string, number> = {};
 for (const c of constellations) revealProgress[c.id] = 0;
 
-// ── Background stars (fixed in world space) ──
+// ── Background Stars ──
+// Decorative twinkling stars scattered across the world space
 interface BgStar {
-  x: number;
-  y: number;
-  r: number;
-  baseAlpha: number;
+  x: number;          // World-space X
+  y: number;          // World-space Y
+  r: number;          // Radius
+  baseAlpha: number;  // Base opacity (before twinkle)
   twinkleSpeed: number;
   twinklePhase: number;
 }
@@ -76,20 +85,24 @@ for (let i = 0; i < BG_STAR_COUNT; i++) {
   });
 }
 
-// ── Coordinate transforms ──
+// ── Coordinate Transforms ──
+
+// Convert world-space coordinates to screen-space pixel position
 function worldToScreen(wx: number, wy: number): [number, number] {
   const sx = (wx - camera.x) * camera.zoom + canvas.width / devicePixelRatio / 2;
   const sy = (wy - camera.y) * camera.zoom + canvas.height / devicePixelRatio / 2;
   return [sx, sy];
 }
 
+// Convert screen-space pixel position to world-space coordinates
 function screenToWorld(sx: number, sy: number): [number, number] {
   const wx = (sx - canvas.width / devicePixelRatio / 2) / camera.zoom + camera.x;
   const wy = (sy - canvas.height / devicePixelRatio / 2) / camera.zoom + camera.y;
   return [wx, wy];
 }
 
-// ── Resize ──
+// ── Canvas Resize ──
+// Re-scale canvas to fill viewport at correct DPI
 function resize() {
   setupHiDpiCanvas(canvas, ctx);
 }
@@ -97,6 +110,7 @@ window.addEventListener('resize', resize);
 resize();
 
 // ── Input: Drag ──
+// Start dragging to pan the camera. Captures pointer for smooth tracking.
 canvas.addEventListener('pointerdown', (e) => {
   isDragging = true;
   dragStart = { x: e.clientX, y: e.clientY };
@@ -108,6 +122,7 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
+// Track mouse/touch position and update camera target while dragging
 canvas.addEventListener('pointermove', (e) => {
   mouseScreen = { x: e.clientX, y: e.clientY };
   if (isDragging) {
@@ -118,16 +133,19 @@ canvas.addEventListener('pointermove', (e) => {
   }
 });
 
+// Handle click/tap on pointer up.
+// Desktop: single click on a constellation opens it.
+// Touch: first tap selects (highlights + label), second tap on same opens it.
 canvas.addEventListener('pointerup', (e) => {
   if (isDragging && !transitioning) {
     const dx = e.clientX - dragStart.x;
     const dy = e.clientY - dragStart.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
     if (dist < 5) {
+      // Small movement = click/tap (not a drag)
       mouseScreen = { x: e.clientX, y: e.clientY };
       const tapped = getHoveredConstellation();
       if (isMobile) {
-        // First tap selects (highlights + label), second tap on same opens it
         if (tapped && selectedConstellation?.id === tapped.id) {
           startTransition(tapped);
         } else {
@@ -137,23 +155,26 @@ canvas.addEventListener('pointerup', (e) => {
         if (tapped) startTransition(tapped);
       }
     } else if (isMobile) {
-      // Dragged — deselect
+      // Drag on touch deselects the current constellation
       selectedConstellation = null;
     }
   }
   isDragging = false;
 });
+
+// Reset mouse position when pointer leaves the canvas (desktop)
 canvas.addEventListener('pointerleave', () => {
   mouseScreen = { x: -9999, y: -9999 };
 });
 
-// ── Input: Zoom ──
+// ── Input: Mouse Wheel Zoom ──
+// Zoom toward cursor position on scroll
 canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   const factor = e.deltaY > 0 ? 0.985 : 1.015;
   targetCamera.zoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, targetCamera.zoom * factor));
 
-  // Zoom toward mouse position
+  // Shift camera toward mouse so zoom feels anchored to cursor
   const [wx, wy] = screenToWorld(e.clientX, e.clientY);
   targetCamera.x += (wx - targetCamera.x) * (1 - 1 / factor) * 0.3;
   targetCamera.y += (wy - targetCamera.y) * (1 - 1 / factor) * 0.3;
@@ -164,7 +185,8 @@ canvas.addEventListener('wheel', (e) => {
   }
 }, { passive: false });
 
-// ── Touch pinch zoom ──
+// ── Input: Touch Pinch Zoom ──
+// Two-finger pinch to zoom on touch devices. preventDefault stops browser zoom/refresh.
 let lastPinchDist = 0;
 canvas.addEventListener('touchstart', (e) => {
   e.preventDefault();
@@ -191,7 +213,9 @@ canvas.addEventListener('touchmove', (e) => {
 
 canvas.addEventListener('touchend', () => { lastPinchDist = 0; }, { passive: true });
 
-// ── Hover detection ──
+// ── Hover Detection ──
+// Find the constellation closest to the current mouse/touch position (in world space).
+// Uses HOVER_RADIUS scaled by zoom level as the detection threshold.
 function getHoveredConstellation(): Constellation | null {
   const [mx, my] = screenToWorld(mouseScreen.x, mouseScreen.y);
   let closest: Constellation | null = null;
@@ -213,6 +237,8 @@ function getHoveredConstellation(): Constellation | null {
 // ── Drawing ──
 let time = 0;
 
+// Draw decorative background stars with twinkling animation.
+// Culls stars outside the viewport for performance. Fades out during transitions.
 function drawBgStars() {
   const w = canvas.width / devicePixelRatio;
   const h = canvas.height / devicePixelRatio;
@@ -231,30 +257,30 @@ function drawBgStars() {
   }
 }
 
+// Draw a single constellation: glow, lines, stars, and fill polygon.
+// Brightness is controlled by revealProgress. During transitions, non-target constellations fade out.
 function drawConstellation(c: Constellation) {
-  // During transition, fade out non-target constellations
   const isTarget = transitionTarget?.id === c.id;
   const dimFactor = transitioning && !isTarget ? (1 - transitionFade) : 1;
-  if (dimFactor < 0.01) return; // skip fully faded constellations
+  if (dimFactor < 0.01) return;
 
   const progress = revealProgress[c.id];
   const lineAlpha = (LINE_ALPHA_DIM + (LINE_ALPHA_BRIGHT - LINE_ALPHA_DIM) * progress) * dimFactor;
   const starAlpha = (STAR_ALPHA_DIM + (STAR_ALPHA_BRIGHT - STAR_ALPHA_DIM) * progress) * dimFactor;
   const glowAmount = progress * dimFactor;
 
+  // Convert star positions from world space to screen space
   const screenStars: [number, number][] = c.stars.map((s) =>
     worldToScreen(c.center.x + s.x, c.center.y + s.y)
   );
 
-  // Glow behind constellation — centered on star centroid, sized to contain all stars
+  // Radial glow behind the constellation, centered on the star centroid
   if (glowAmount > 0.05) {
-    // Compute centroid of stars in world space
     let avgX = 0, avgY = 0;
     for (const s of c.stars) { avgX += s.x; avgY += s.y; }
     avgX = c.center.x + avgX / c.stars.length;
     avgY = c.center.y + avgY / c.stars.length;
 
-    // Compute max distance from centroid to any star
     let maxDist = 0;
     for (const s of c.stars) {
       const dx = (c.center.x + s.x) - avgX;
@@ -272,7 +298,7 @@ function drawConstellation(c: Constellation) {
     ctx.fillRect(cx - glowRadius, cy - glowRadius, glowRadius * 2, glowRadius * 2);
   }
 
-  // Lines
+  // Draw lines between connected stars
   ctx.strokeStyle = hexToRgba(c.color, lineAlpha);
   ctx.lineWidth = 1 + progress * 0.5;
   ctx.lineCap = 'round';
@@ -287,11 +313,10 @@ function drawConstellation(c: Constellation) {
     ctx.stroke();
   }
 
-  // Stars
+  // Draw star dots with individual glow halos
   for (const [sx, sy] of screenStars) {
     const r = STAR_RADIUS * Math.min(camera.zoom + 0.3, 1.5);
 
-    // Star glow
     if (glowAmount > 0.1) {
       const gradient = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 4);
       gradient.addColorStop(0, hexToRgba(c.color, 0.4 * glowAmount));
@@ -300,19 +325,20 @@ function drawConstellation(c: Constellation) {
       ctx.fillRect(sx - r * 4, sy - r * 4, r * 8, r * 8);
     }
 
-    // Star dot
     ctx.beginPath();
     ctx.arc(sx, sy, r, 0, Math.PI * 2);
     ctx.fillStyle = `rgba(255, 255, 255, ${starAlpha})`;
     ctx.fill();
   }
 
-  // Filled shape on reveal
+  // Draw a filled convex hull shape behind the constellation on reveal
   if (progress > 0.1) {
     drawConstellationFill(c, screenStars, progress);
   }
 }
 
+// Compute the convex hull of a set of 2D points using Andrew's monotone chain algorithm.
+// Returns the hull vertices in counter-clockwise order.
 function convexHull(points: [number, number][]): [number, number][] {
   const pts = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   if (pts.length <= 2) return pts;
@@ -339,19 +365,19 @@ function convexHull(points: [number, number][]): [number, number][] {
   return lower.concat(upper);
 }
 
+// Draw a subtle gradient fill inside the convex hull of the constellation's stars.
+// Creates the "glowing shape" effect when a constellation is highlighted.
 function drawConstellationFill(c: Constellation, screenStars: [number, number][], progress: number) {
   if (screenStars.length < 3) return;
   ctx.save();
 
   const hull = convexHull(screenStars);
 
-  // Compute centroid of hull
   let cx = 0, cy = 0;
   for (const [sx, sy] of hull) { cx += sx; cy += sy; }
   cx /= hull.length;
   cy /= hull.length;
 
-  // Max distance from centroid to any star
   let maxDist = 0;
   for (const [sx, sy] of screenStars) {
     const dist = Math.sqrt((sx - cx) ** 2 + (sy - cy) ** 2);
@@ -375,6 +401,8 @@ function drawConstellationFill(c: Constellation, screenStars: [number, number][]
   ctx.restore();
 }
 
+// Draw decorative nebula clouds at fixed world positions.
+// These are subtle colored radial gradients that add depth to the sky.
 function drawNebulae() {
   const nebulae = [
     { x: -400, y: -300, r: 500, color: [30, 60, 90] as const },
@@ -396,6 +424,8 @@ function drawNebulae() {
   }
 }
 
+// Find the constellation closest to the center of the screen (used for touch proximity glow).
+// Only considers constellations within 35% of the smaller screen dimension.
 function getMobileClosest(): Constellation | null {
   const w = canvas.width / devicePixelRatio;
   const h = canvas.height / devicePixelRatio;
@@ -416,6 +446,8 @@ function getMobileClosest(): Constellation | null {
   return closest;
 }
 
+// Position and show/hide the floating constellation name label.
+// Desktop: follows the hovered constellation. Touch: follows the tapped (selected) constellation.
 function updateLabel() {
   const active = isMobile ? selectedConstellation : hoveredConstellation;
   if (active) {
@@ -439,6 +471,8 @@ function updateLabel() {
 
 let navigated = false;
 
+// Begin the zoom-through transition to a constellation's story page.
+// Creates a color wash overlay, prefetches the target page, and starts the animation.
 function startTransition(c: Constellation) {
   transitioning = true;
   transitionTarget = c;
@@ -452,6 +486,7 @@ function startTransition(c: Constellation) {
   const brand = document.getElementById('brand');
   if (brand) brand.style.opacity = '0';
 
+  // Full-screen overlay that fades in with the constellation's color
   fadeOverlay = document.createElement('div');
   fadeOverlay.style.cssText = `
     position: fixed; inset: 0; z-index: 100;
@@ -468,26 +503,30 @@ function startTransition(c: Constellation) {
   targetCamera.y = c.center.y;
 }
 
+// Advance the transition animation each frame.
+// Uses compound acceleration (progress speeds up as it increases) for a cinematic zoom effect.
+// Navigates to the story page once the overlay is opaque enough to hide the page swap.
 function updateTransition() {
   if (!transitioning || !transitionTarget || !fadeOverlay) return;
 
-  // Accelerating progress — starts slow, speeds up
+  // Compound acceleration: starts slow, speeds up
   transitionProgress += 0.003 + transitionProgress * 0.008;
   transitionProgress = Math.min(transitionProgress, 1);
 
+  // Keep the target constellation fully lit throughout
   revealProgress[transitionTarget.id] = 1;
 
-  // Continuously accelerating zoom — never stops
+  // Continuously accelerating zoom — never stops or plateaus
   const zoomEase = Math.pow(transitionProgress, 2.2);
   const targetZoom = 0.45 + zoomEase * 30;
   camera.zoom += (targetZoom - camera.zoom) * 0.04;
 
-  // Pan to center — fast approach that locks on
+  // Pan to center on the target constellation
   const panSpeed = 0.02 + transitionProgress * 0.08;
   camera.x += (targetCamera.x - camera.x) * panSpeed;
   camera.y += (targetCamera.y - camera.y) * panSpeed;
 
-  // Fade out everything else (stars, nebulae, other constellations)
+  // Fade out background stars, nebulae, and other constellations
   const fadeCurve = Math.min(1, transitionProgress * 2.5);
   transitionFade = 1 - Math.pow(1 - fadeCurve, 2);
 
@@ -497,7 +536,7 @@ function updateTransition() {
     }
   }
 
-  // Color wash overlay fades in during the second half
+  // Color wash overlay fades in during the second half of the transition
   const overlayStart = 0.4;
   if (transitionProgress > overlayStart) {
     const p = (transitionProgress - overlayStart) / (1 - overlayStart);
@@ -512,27 +551,29 @@ function updateTransition() {
   }
 }
 
-// ── Main loop ──
+// ── Main Loop ──
+// Runs every frame via requestAnimationFrame. Handles camera smoothing, hover/reveal state,
+// intro animation, and renders all visual layers in order.
 function frame() {
   time += 0.012;
 
   if (transitioning) {
     updateTransition();
   } else {
-    // Smooth camera
+    // Smooth camera interpolation toward target
     camera.x += (targetCamera.x - camera.x) * 0.12;
     camera.y += (targetCamera.y - camera.y) * 0.12;
     camera.zoom += (targetCamera.zoom - camera.zoom) * 0.12;
 
-    // Hover detection
+    // Desktop hover detection
     hoveredConstellation = isDragging ? null : getHoveredConstellation();
     canvas.style.cursor = hoveredConstellation ? 'pointer' : isDragging ? 'grabbing' : 'grab';
 
-    // Intro glow — all constellations light up then fade
+    // Intro glow: all constellations glow together on first visit, then fade out
     if (introActive) {
       introTimer += 0.012;
-      const glowIn = Math.min(1, introTimer / 1.2); // fade in over ~1.2s
-      const glowOut = introTimer > 2.0 ? Math.min(1, (introTimer - 2.0) / 1.5) : 0; // fade out
+      const glowIn = Math.min(1, introTimer / 1.2);
+      const glowOut = introTimer > 2.0 ? Math.min(1, (introTimer - 2.0) / 1.5) : 0;
       const introGlow = glowIn * (1 - glowOut) * 0.45;
       for (const c of constellations) {
         revealProgress[c.id] = introGlow;
@@ -543,7 +584,7 @@ function frame() {
         if (overlay) overlay.classList.add('fading');
       }
     } else {
-      // Update reveal progress
+      // Update per-constellation reveal progress toward target brightness
       for (const c of constellations) {
         let target: number;
         if (isMobile) {
@@ -551,7 +592,7 @@ function frame() {
             // Tapped constellation gets full highlight
             target = 1;
           } else {
-            // Others use proximity-based subtle glow
+            // Proximity-based subtle glow for constellations near screen center
             const [sx, sy] = worldToScreen(c.center.x, c.center.y);
             const w = canvas.width / devicePixelRatio;
             const h = canvas.height / devicePixelRatio;
@@ -562,6 +603,7 @@ function frame() {
             target = dist < radius ? Math.max(0.15, 1 - dist / radius) : 0;
           }
         } else {
+          // Desktop: only the hovered constellation lights up
           target = hoveredConstellation?.id === c.id ? 1 : 0;
         }
         revealProgress[c.id] += (target - revealProgress[c.id]) * REVEAL_SPEED;
@@ -569,12 +611,11 @@ function frame() {
     }
   }
 
-  // Clear
+  // Clear and draw all layers
   const w = canvas.width / devicePixelRatio;
   const h = canvas.height / devicePixelRatio;
   ctx.clearRect(0, 0, w, h);
 
-  // Draw layers
   drawNebulae();
   drawBgStars();
   for (const c of constellations) {

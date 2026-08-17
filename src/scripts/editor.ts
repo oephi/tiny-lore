@@ -3,21 +3,24 @@ import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type ExistingConstellation } f
 const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
 
+// Load all existing constellations from the embedded JSON (used for minimap and load buttons)
 const existingData: ExistingConstellation[] = JSON.parse(
   document.getElementById('existing-data')!.textContent!
 );
 
-// State
+// ── State ──
+// Stars and lines use [x, y] tuples internally for canvas operations.
+// Converted to/from object format {x, y} / {from, to} on load/save.
 let stars: [number, number][] = [];
 let lines: [number, number][] = [];
 let mode: 'star' | 'line' | 'delete' = 'star';
-let lineStart: number | null = null;
+let lineStart: number | null = null;  // Index of the first star when drawing a line
 let hoveredStar: number | null = null;
 let history: { stars: [number, number][]; lines: [number, number][] }[] = [];
 let mouseX = 0;
 let mouseY = 0;
 
-// DOM
+// ── DOM References ──
 const nameInput = document.getElementById('name') as HTMLInputElement;
 const subtitleInput = document.getElementById('subtitle') as HTMLInputElement;
 const colorInput = document.getElementById('color') as HTMLInputElement;
@@ -27,35 +30,41 @@ const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
 const saveFeedback = document.getElementById('save-feedback')!;
 const deleteBtn = document.getElementById('btn-delete')!;
-let currentLoadedId = '';
+let currentLoadedId = '';  // Tracks which constellation is loaded (empty = new)
 
 const modeStarBtn = document.getElementById('mode-star')!;
 const modeLineBtn = document.getElementById('mode-line')!;
 const modeDeleteBtn = document.getElementById('mode-delete')!;
 
-// Minimap
+// ── Minimap ──
 const minimap = document.getElementById('minimap') as HTMLCanvasElement;
 const minimapCtx = minimap.getContext('2d')!;
 const centerCoordsEl = document.getElementById('center-coords')!;
-let centerX = 0;
-let centerY = 0;
+let centerX = 0;  // World-space X position where this constellation will be placed
+let centerY = 0;  // World-space Y position where this constellation will be placed
 
-// Center of canvas in pixels (origin point)
+// ── Coordinate Transforms ──
+// The editor canvas has its origin at center. Stars are stored as offsets from center.
+
+// Returns the pixel position of the canvas center (the origin point)
 function getCenter(): [number, number] {
   return [canvas.width / devicePixelRatio / 2, canvas.height / devicePixelRatio / 2];
 }
 
+// Convert a screen pixel position to a star coordinate (offset from canvas center)
 function pixelToCoord(px: number, py: number): [number, number] {
   const [cx, cy] = getCenter();
   return [Math.round(px - cx), Math.round(py - cy)];
 }
 
+// Convert a star coordinate back to screen pixel position
 function coordToPixel(x: number, y: number): [number, number] {
   const [cx, cy] = getCenter();
   return [cx + x, cy + y];
 }
 
-// Resize
+// ── Canvas Resize ──
+// Re-scales the editor canvas for the current element size and DPI
 function resize() {
   setupHiDpiCanvas(canvas, ctx, true);
   draw();
@@ -63,7 +72,8 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Save state for undo
+// ── Undo History ──
+// Pushes a deep copy of the current stars/lines state onto the history stack (max 50 entries)
 function saveHistory() {
   history.push({
     stars: stars.map(s => [...s] as [number, number]),
@@ -72,6 +82,10 @@ function saveHistory() {
   if (history.length > 50) history.shift();
 }
 
+// ── Hit Testing ──
+
+// Find the index of a star within a pixel threshold of the given screen position.
+// Returns null if no star is close enough. Searches in reverse so topmost stars are found first.
 function findStarAt(px: number, py: number): number | null {
   const threshold = 12;
   for (let i = stars.length - 1; i >= 0; i--) {
@@ -83,6 +97,8 @@ function findStarAt(px: number, py: number): number | null {
   return null;
 }
 
+// Find the index of a line within a pixel threshold of the given screen position.
+// Uses point-to-line-segment projection for accurate distance testing.
 function findLineAt(px: number, py: number): number | null {
   const threshold = 8;
   for (let i = lines.length - 1; i >= 0; i--) {
@@ -104,6 +120,8 @@ function findLineAt(px: number, py: number): number | null {
   return null;
 }
 
+// ── Mouse Input ──
+// Track mouse position and update hover state + cursor based on current tool mode
 canvas.addEventListener('mousemove', (e) => {
   const rect = canvas.getBoundingClientRect();
   mouseX = e.clientX - rect.left;
@@ -123,6 +141,10 @@ canvas.addEventListener('mousemove', (e) => {
   draw();
 });
 
+// Handle click actions based on current tool mode:
+// - Star mode: place a new star at the clicked position
+// - Line mode: select two stars to draw a line between them
+// - Delete mode: remove a star (and its connected lines) or a line
 canvas.addEventListener('click', (e) => {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left;
@@ -153,7 +175,9 @@ canvas.addEventListener('click', (e) => {
     const star = findStarAt(px, py);
     if (star !== null) {
       saveHistory();
+      // Remove all lines connected to this star
       lines = lines.filter(([a, b]) => a !== star && b !== star);
+      // Re-index lines to account for the removed star
       lines = lines.map(([a, b]) => [
         a > star ? a - 1 : a,
         b > star ? b - 1 : b,
@@ -172,7 +196,8 @@ canvas.addEventListener('click', (e) => {
   draw();
 });
 
-// Tool switching
+// ── Tool Switching ──
+// Switch between Place Stars (1), Draw Lines (2), and Delete (3) modes
 function setMode(m: 'star' | 'line' | 'delete') {
   mode = m;
   lineStart = null;
@@ -185,7 +210,8 @@ modeStarBtn.addEventListener('click', () => setMode('star'));
 modeLineBtn.addEventListener('click', () => setMode('line'));
 modeDeleteBtn.addEventListener('click', () => setMode('delete'));
 
-// Undo
+// ── Undo Button ──
+// Restores the previous stars/lines state from the history stack
 document.getElementById('btn-undo')!.addEventListener('click', () => {
   const prev = history.pop();
   if (prev) {
@@ -197,7 +223,8 @@ document.getElementById('btn-undo')!.addEventListener('click', () => {
   }
 });
 
-// Clear
+// ── Clear Button ──
+// Removes all stars and lines (can be undone)
 document.getElementById('btn-clear')!.addEventListener('click', () => {
   saveHistory();
   stars = [];
@@ -207,7 +234,8 @@ document.getElementById('btn-clear')!.addEventListener('click', () => {
   draw();
 });
 
-// Save
+// ── Save Feedback ──
+// Show a temporary success/error message in the sidebar
 function showFeedback(message: string, isError = false) {
   saveFeedback.textContent = message;
   saveFeedback.classList.toggle('error', isError);
@@ -215,6 +243,9 @@ function showFeedback(message: string, isError = false) {
   setTimeout(() => saveFeedback.classList.add('hidden'), 3000);
 }
 
+// ── Save Button ──
+// POST the constellation data to the save API endpoint.
+// In dev: writes a .md file to disk. In prod: commits via GitHub API.
 document.getElementById('btn-save')!.addEventListener('click', async () => {
   const name = nameInput.value;
   const filename = filenameInput.value;
@@ -224,6 +255,7 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
     return;
   }
 
+  // Convert internal tuple format to object format for the API
   const payload = {
     filename,
     name,
@@ -254,7 +286,8 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
   }
 });
 
-// Copy Markdown
+// ── Copy Markdown Button ──
+// Generate the full .md file content (YAML frontmatter + story body) and copy to clipboard
 document.getElementById('btn-export')!.addEventListener('click', () => {
   const name = nameInput.value || 'Unnamed';
   const subtitle = subtitleInput.value || 'A new constellation';
@@ -283,7 +316,9 @@ ${story}
   });
 });
 
-// Delete
+// ── Delete Button ──
+// DELETE the current constellation via the API (with confirmation).
+// In dev: deletes the .md file from disk. In prod: deletes via GitHub API.
 deleteBtn.addEventListener('click', async () => {
   if (!currentLoadedId) return;
   if (!confirm(`Delete "${nameInput.value || currentLoadedId}"? This cannot be undone.`)) return;
@@ -297,9 +332,8 @@ deleteBtn.addEventListener('click', async () => {
     const result = await res.json();
     if (res.ok) {
       showFeedback(`Deleted ${result.slug}.md`);
-      // Reset to new constellation state
       loadConstellation('');
-      // Remove the load button for deleted constellation
+      // Remove the sidebar button for the deleted constellation
       document.querySelector(`.load-btn[data-id="${currentLoadedId}"]`)?.remove();
     } else {
       showFeedback(result.error || 'Delete failed.', true);
@@ -309,13 +343,17 @@ deleteBtn.addEventListener('click', async () => {
   }
 });
 
+// ── Status Display ──
+// Update the star/line count labels in the sidebar and refresh the minimap
 function updateCounts() {
   starCount.textContent = `Stars: ${stars.length}`;
   lineCount.textContent = `Lines: ${lines.length}`;
   drawMinimap();
 }
 
-// Load existing constellation
+// ── Load Constellation ──
+// Populate the editor with an existing constellation's data, or reset to blank if id is empty.
+// Converts from object format {x, y} to internal tuple format [x, y].
 function loadConstellation(id: string) {
   currentLoadedId = id;
   deleteBtn.classList.toggle('hidden', !id);
@@ -355,7 +393,8 @@ function loadConstellation(id: string) {
   drawMinimap();
 }
 
-// Load buttons
+// ── Sidebar Load Buttons ──
+// Each button loads an existing constellation into the editor
 document.querySelectorAll<HTMLButtonElement>('.load-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.load-btn').forEach((b) => b.classList.remove('active'));
@@ -364,10 +403,12 @@ document.querySelectorAll<HTMLButtonElement>('.load-btn').forEach((btn) => {
   });
 });
 
-// Redraw when color changes
+// Redraw canvas and minimap when the color picker changes
 colorInput.addEventListener('input', () => { draw(); drawMinimap(); });
 
-// Drawing
+// ── Main Canvas Drawing ──
+// Renders the editor view: grid, constellation lines, pending line, stars with labels,
+// and coordinate display under the cursor in star mode
 function draw() {
   const w = canvas.width / devicePixelRatio;
   const h = canvas.height / devicePixelRatio;
@@ -375,7 +416,7 @@ function draw() {
 
   ctx.clearRect(0, 0, w, h);
 
-  // Grid crosshair at center
+  // Grid crosshair at center (shows the origin point)
   const [cx, cy] = getCenter();
   ctx.strokeStyle = 'rgba(245, 239, 224, 0.06)';
   ctx.lineWidth = 1;
@@ -386,7 +427,7 @@ function draw() {
   ctx.lineTo(w, cy);
   ctx.stroke();
 
-  // Grid dots
+  // Grid dots (subtle background pattern)
   const gridSize = 20;
   ctx.fillStyle = 'rgba(245, 239, 224, 0.03)';
   for (let x = cx % gridSize; x < w; x += gridSize) {
@@ -395,7 +436,7 @@ function draw() {
     }
   }
 
-  // Lines
+  // Draw constellation lines
   for (let i = 0; i < lines.length; i++) {
     const [a, b] = lines[i];
     if (a >= stars.length || b >= stars.length) continue;
@@ -410,7 +451,7 @@ function draw() {
     ctx.stroke();
   }
 
-  // Pending line
+  // Draw dashed line from first selected star to cursor (line tool preview)
   if (mode === 'line' && lineStart !== null) {
     const [x1, y1] = coordToPixel(stars[lineStart][0], stars[lineStart][1]);
     ctx.strokeStyle = hexToRgba(color, 0.3);
@@ -423,13 +464,14 @@ function draw() {
     ctx.setLineDash([]);
   }
 
-  // Stars
+  // Draw stars with index labels and hover/selection glow
   for (let i = 0; i < stars.length; i++) {
     const [px, py] = coordToPixel(stars[i][0], stars[i][1]);
     const isHovered = hoveredStar === i;
     const isLineStart = lineStart === i;
     const r = isHovered || isLineStart ? 5 : 3;
 
+    // Radial glow around hovered or selected stars
     if (isHovered || isLineStart) {
       const grad = ctx.createRadialGradient(px, py, 0, px, py, 15);
       grad.addColorStop(0, hexToRgba(color, 0.4));
@@ -443,12 +485,13 @@ function draw() {
     ctx.fillStyle = isHovered || isLineStart ? '#ffffff' : hexToRgba(color, 0.9);
     ctx.fill();
 
+    // Star index label
     ctx.fillStyle = 'rgba(245, 239, 224, 0.35)';
     ctx.font = '10px Lato, sans-serif';
     ctx.fillText(String(i), px + 8, py - 6);
   }
 
-  // Coordinate display
+  // Show coordinate under cursor in star placement mode
   if (mode === 'star') {
     const [mx, my] = pixelToCoord(mouseX, mouseY);
     ctx.fillStyle = 'rgba(245, 239, 224, 0.3)';
@@ -457,7 +500,11 @@ function draw() {
   }
 }
 
-// Minimap drawing
+// ── Minimap ──
+// Shows a bird's-eye view of the entire world space with all constellations.
+// The current constellation is shown in white at its center position.
+
+// Re-scale the minimap canvas for the current element size and DPI
 function resizeMinimap() {
   setupHiDpiCanvas(minimap, minimapCtx, true);
   drawMinimap();
@@ -465,6 +512,7 @@ function resizeMinimap() {
 window.addEventListener('resize', resizeMinimap);
 resizeMinimap();
 
+// Render the minimap: all existing constellations, the current constellation, and a crosshair
 function drawMinimap() {
   const w = minimap.width / devicePixelRatio;
   const h = minimap.height / devicePixelRatio;
@@ -476,7 +524,7 @@ function drawMinimap() {
   minimapCtx.fillStyle = '#072e2c';
   minimapCtx.fillRect(0, 0, w, h);
 
-  // Grid lines at origin
+  // Origin crosshair
   minimapCtx.strokeStyle = 'rgba(245, 239, 224, 0.08)';
   minimapCtx.lineWidth = 1;
   minimapCtx.beginPath();
@@ -486,12 +534,11 @@ function drawMinimap() {
   minimapCtx.lineTo(w, h / 2);
   minimapCtx.stroke();
 
-  // Draw existing constellations
+  // Draw all existing constellations (lines, stars, and name labels)
   for (const c of existingData) {
     const cx = w / 2 + c.center.x * scale;
     const cy = h / 2 + c.center.y * scale;
 
-    // Draw constellation lines
     for (const line of c.lines) {
       if (line.from >= c.stars.length || line.to >= c.stars.length) continue;
       const x1 = cx + c.stars[line.from].x * scale;
@@ -506,7 +553,6 @@ function drawMinimap() {
       minimapCtx.stroke();
     }
 
-    // Draw constellation stars
     for (const s of c.stars) {
       minimapCtx.beginPath();
       minimapCtx.arc(cx + s.x * scale, cy + s.y * scale, 1.5, 0, Math.PI * 2);
@@ -514,7 +560,6 @@ function drawMinimap() {
       minimapCtx.fill();
     }
 
-    // Label
     minimapCtx.fillStyle = hexToRgba(c.color, 0.5);
     minimapCtx.font = '8px Lato, sans-serif';
     minimapCtx.textAlign = 'center';
@@ -522,7 +567,7 @@ function drawMinimap() {
     minimapCtx.textAlign = 'start';
   }
 
-  // Draw current constellation at its center position
+  // Draw the current constellation being edited (in white, at its center position)
   if (stars.length > 0) {
     const color = colorInput.value;
     const cx = w / 2 + centerX * scale;
@@ -550,7 +595,7 @@ function drawMinimap() {
     }
   }
 
-  // Draw placement crosshair
+  // Draw placement crosshair at the current center position
   const px = w / 2 + centerX * scale;
   const py = h / 2 + centerY * scale;
   minimapCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
@@ -565,6 +610,7 @@ function drawMinimap() {
   centerCoordsEl.textContent = `(${centerX}, ${centerY})`;
 }
 
+// Click on minimap to set the constellation's world-space center position
 minimap.addEventListener('click', (e) => {
   const rect = minimap.getBoundingClientRect();
   const mx = e.clientX - rect.left;
@@ -578,7 +624,8 @@ minimap.addEventListener('click', (e) => {
   drawMinimap();
 });
 
-// Keyboard shortcuts
+// ── Keyboard Shortcuts ──
+// 1/2/3 to switch tools, Ctrl+Z to undo. Disabled when typing in input fields.
 document.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
   if (e.key === '1') setMode('star');
