@@ -1,13 +1,4 @@
-interface ExistingConstellation {
-  id: string;
-  name: string;
-  subtitle: string;
-  color: string;
-  center: { x: number; y: number };
-  stars: { x: number; y: number }[];
-  lines: { from: number; to: number }[];
-  body: string;
-}
+import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type ExistingConstellation } from './shared';
 
 const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -46,7 +37,6 @@ const modeDeleteBtn = document.getElementById('mode-delete')!;
 const minimap = document.getElementById('minimap') as HTMLCanvasElement;
 const minimapCtx = minimap.getContext('2d')!;
 const centerCoordsEl = document.getElementById('center-coords')!;
-const WORLD_SIZE = 4000;
 let centerX = 0;
 let centerY = 0;
 
@@ -67,9 +57,7 @@ function coordToPixel(x: number, y: number): [number, number] {
 
 // Resize
 function resize() {
-  canvas.width = canvas.offsetWidth * devicePixelRatio;
-  canvas.height = canvas.offsetHeight * devicePixelRatio;
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  setupHiDpiCanvas(canvas, ctx, true);
   draw();
 }
 window.addEventListener('resize', resize);
@@ -469,18 +457,9 @@ function draw() {
   }
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
 // Minimap drawing
 function resizeMinimap() {
-  minimap.width = minimap.offsetWidth * devicePixelRatio;
-  minimap.height = minimap.offsetHeight * devicePixelRatio;
-  minimapCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  setupHiDpiCanvas(minimap, minimapCtx, true);
   drawMinimap();
 }
 window.addEventListener('resize', resizeMinimap);

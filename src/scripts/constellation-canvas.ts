@@ -1,19 +1,10 @@
-interface Constellation {
-  id: string;
-  name: string;
-  subtitle: string;
-  stars: { x: number; y: number }[];
-  lines: { from: number; to: number }[];
-  center: { x: number; y: number };
-  color: string;
-}
+import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type Constellation } from './shared';
 
 const constellations: Constellation[] = JSON.parse(
   document.getElementById('constellation-data')!.textContent!
 );
 
 // ── Constants ──
-const WORLD_SIZE = 4000;
 const BG_STAR_COUNT = 3000;
 const STAR_RADIUS = 2.2;
 const LINE_ALPHA_DIM = 0.08;
@@ -100,11 +91,7 @@ function screenToWorld(sx: number, sy: number): [number, number] {
 
 // ── Resize ──
 function resize() {
-  canvas.width = window.innerWidth * devicePixelRatio;
-  canvas.height = window.innerHeight * devicePixelRatio;
-  canvas.style.width = window.innerWidth + 'px';
-  canvas.style.height = window.innerHeight + 'px';
-  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  setupHiDpiCanvas(canvas, ctx);
 }
 window.addEventListener('resize', resize);
 resize();
@@ -221,14 +208,6 @@ function getHoveredConstellation(): Constellation | null {
     }
   }
   return closest;
-}
-
-// ── Helpers ──
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 // ── Drawing ──
