@@ -471,6 +471,25 @@ function updateLabel() {
 
 let navigated = false;
 
+// Reset transition state when user navigates back (bfcache restore)
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted || navigated) {
+    transitioning = false;
+    transitionTarget = null;
+    transitionProgress = 0;
+    transitionFade = 0;
+    navigated = false;
+    if (fadeOverlay) {
+      fadeOverlay.remove();
+      fadeOverlay = null;
+    }
+    canvas.style.cursor = 'grab';
+    label.classList.add('hidden');
+    const hint = document.getElementById('hint');
+    if (hint) hint.style.opacity = '1';
+  }
+});
+
 // Begin the zoom-through transition to a constellation's story page.
 // Creates a color wash overlay, prefetches the target page, and starts the animation.
 function startTransition(c: Constellation) {

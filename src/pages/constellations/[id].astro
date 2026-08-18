@@ -21,7 +21,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
 <Layout title={`${name} — Tiny Lore`}>
   <!-- Entrance overlay that fades away -->
-  <div class="entrance-overlay" style={`--accent: ${color};`}></div>
+  <div class="entrance-overlay" id="entrance-overlay" style={`--accent: ${color};`}></div>
 
   <SiteHeader backHref="/constellations" loginRedirect={`/constellations/${entry.id}`} />
 
@@ -254,6 +254,18 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       playBtn.innerHTML = '&#9654;';
       tracks[currentIndex]?.classList.remove('active');
     }
+  });
+
+  // Intercept back links — use browser back to get the nice pageshow restore
+  document.querySelectorAll<HTMLAnchorElement>('a[href="/constellations"]').forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      }
+      history.back();
+    });
   });
 </script>
 
