@@ -33,7 +33,7 @@ const allTracks = entries.flatMap(entry =>
 <Layout>
   <div class="page-fade"></div>
   <ConstellationCanvas />
-  <SiteHeader loginRedirect="/constellations" />
+  <SiteHeader />
 
   <!-- Favorites view (hidden by default) -->
   <div class="favorites-view hidden" id="favorites-view">
@@ -440,8 +440,9 @@ const allTracks = entries.flatMap(entry =>
   tabUniverse.addEventListener('click', () => switchTab('universe'));
   tabFavorites.addEventListener('click', () => switchTab('favorites'));
 
-  // Load favorites on page load
+  // Load favorites on page load and after login
   loadFavorites();
+  window.addEventListener('auth-changed', () => loadFavorites());
 </script>
 
 <style>

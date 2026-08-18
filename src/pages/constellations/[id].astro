@@ -23,7 +23,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   <!-- Entrance overlay that fades away -->
   <div class="entrance-overlay" id="entrance-overlay" style={`--accent: ${color};`}></div>
 
-  <SiteHeader backHref="/constellations" loginRedirect={`/constellations/${entry.id}`} />
+  <SiteHeader backHref="/constellations" />
 
   <div class="story-page">
 
@@ -133,6 +133,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   loadFavorites();
+  window.addEventListener('auth-changed', () => loadFavorites());
 
   // Handle favorite button clicks
   document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {

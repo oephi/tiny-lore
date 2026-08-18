@@ -4,17 +4,14 @@ import { getOrigin } from '../../../lib/oauth';
 
 export const prerender = false;
 
-// Redirects to Google OAuth. Uses a separate callback URL from the editor auth.
-// Accepts an optional ?redirect query param to return the user to the page they came from.
-export const GET: APIRoute = async ({ url }) => {
+// Opens in a popup from SiteHeader. Redirects to Google OAuth.
+export const GET: APIRoute = async ({ redirect, url }) => {
   const clientId = import.meta.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
     return new Response('Google OAuth not configured', { status: 500 });
   }
 
-  // Encode the return URL in the state param so we can redirect back after login
-  const returnTo = url.searchParams.get('redirect') || '/constellations';
-  const state = generateState() + ':' + Buffer.from(returnTo).toString('base64url');
+  const state = generateState();
   const redirectUri = `${getOrigin(url)}/api/user/callback`;
 
   const params = new URLSearchParams({
@@ -27,13 +24,5 @@ export const GET: APIRoute = async ({ url }) => {
     prompt: 'select_account',
   });
 
-  // Use location.replace() so Google's auth page replaces this route in history
-  const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
-  return new Response(
-    `<!DOCTYPE html><html><head><script>window.location.replace('${googleUrl}');</script></head><body></body></html>`,
-    {
-      status: 200,
-      headers: { 'Content-Type': 'text/html' },
-    },
-  );
+  return redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
 };

@@ -2,13 +2,11 @@
 interface Props {
   backHref?: string;
   backLabel?: string;
-  loginRedirect?: string;
 }
 
 const {
   backHref,
   backLabel = 'Back to the sky',
-  loginRedirect = '/constellations',
 } = Astro.props;
 ---
 
@@ -27,7 +25,7 @@ const {
   </div>
 
   <div class="header-right">
-    <a href={`/api/user/login?redirect=${loginRedirect}`} class="sign-in-link" id="sign-in-link">Sign in</a>
+    <button class="sign-in-link" id="sign-in-link">Sign in</button>
     <button class="user-menu hidden" id="user-menu">
       <span class="user-initial" id="user-initial"></span>
     </button>
@@ -66,6 +64,28 @@ const {
   }
 
   checkAuth();
+
+  // Sign in via popup — keeps main page history clean
+  document.getElementById('sign-in-link')?.addEventListener('click', () => {
+    const w = 480, h = 600;
+    const left = (screen.width - w) / 2;
+    const top = (screen.height - h) / 2;
+    const popup = window.open(
+      '/api/user/login',
+      'tiny-lore-login',
+      `width=${w},height=${h},left=${left},top=${top},popup=yes`
+    );
+
+    // Poll for popup close then refresh auth state
+    const timer = setInterval(() => {
+      if (!popup || popup.closed) {
+        clearInterval(timer);
+        checkAuth();
+        // Re-trigger any page-level auth hooks (e.g. favorites, tab bar)
+        window.dispatchEvent(new Event('auth-changed'));
+      }
+    }, 300);
+  });
 
   const logoutModal = document.getElementById('logout-modal')!;
 
@@ -161,6 +181,9 @@ const {
     text-transform: uppercase;
     color: #c9a84c;
     text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
     opacity: 0.5;
     transition: opacity 0.2s;
   }

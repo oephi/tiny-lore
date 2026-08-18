@@ -72,12 +72,11 @@ export const GET: APIRoute = async ({ request, url }) => {
     );
   }
 
-  // Use location.replace() instead of 302 so the OAuth flow doesn't stay in browser history
   const token = createUserSessionToken(userId, email);
-  const safeReturnTo = returnTo.replace(/'/g, "\\'");
 
+  // Close the popup window — the opener page polls for close and refreshes auth
   return new Response(
-    `<!DOCTYPE html><html><head><script>window.location.replace('${safeReturnTo}');</script></head><body></body></html>`,
+    `<!DOCTYPE html><html><head><script>window.close();</script></head><body>Signed in! You can close this window.</body></html>`,
     {
       status: 200,
       headers: {
