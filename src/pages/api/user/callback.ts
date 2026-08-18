@@ -91,13 +91,18 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 
   // Create session and redirect back
+  // Use location.replace() instead of 302 so the OAuth flow doesn't stay in browser history
   const token = createUserSessionToken(userId, email);
+  const safeReturnTo = returnTo.replace(/'/g, "\\'");
 
-  return new Response(null, {
-    status: 302,
-    headers: {
-      Location: returnTo,
-      'Set-Cookie': userSessionCookie(token),
+  return new Response(
+    `<!DOCTYPE html><html><head><script>window.location.replace('${safeReturnTo}');</script></head><body></body></html>`,
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/html',
+        'Set-Cookie': userSessionCookie(token),
+      },
     },
-  });
+  );
 };

@@ -27,5 +27,13 @@ export const GET: APIRoute = async ({ redirect, url }) => {
     prompt: 'select_account',
   });
 
-  return redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+  // Use location.replace() so Google's auth page replaces this route in history
+  const googleUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
+  return new Response(
+    `<!DOCTYPE html><html><head><script>window.location.replace('${googleUrl}');</script></head><body></body></html>`,
+    {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' },
+    },
+  );
 };
