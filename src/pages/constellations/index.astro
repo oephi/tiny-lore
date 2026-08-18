@@ -714,10 +714,8 @@ const allTracks = entries.flatMap(entry =>
     flex-direction: column;
     gap: 1px;
     overflow: hidden;
-    max-height: 1000px;
-    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity 0.3s ease;
-    opacity: 1;
+    max-height: 800px;
+    transition: max-height 0.2s ease-out, padding 0.1s ease-out;
     background: color-mix(in srgb, var(--accent, #c9a84c) 3%, transparent);
     border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 8%, transparent);
     border-top: none;
@@ -727,9 +725,9 @@ const allTracks = entries.flatMap(entry =>
 
   :global(.track-list.collapsed) {
     max-height: 0;
-    opacity: 0;
     padding: 0 4px;
     border-color: transparent;
+    transition: none;
   }
 
   :global(.track) {
