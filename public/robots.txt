@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tiny-lore.vercel.app/sitemap-index.xml

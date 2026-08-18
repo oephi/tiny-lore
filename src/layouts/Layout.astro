@@ -1,8 +1,13 @@
 ---
 interface Props {
   title?: string;
+  description?: string;
 }
-const { title = 'Tiny Lore — Where tiny moments meet infinite worlds' } = Astro.props;
+const {
+  title = 'Tiny Lore — Where tiny moments meet infinite worlds',
+  description = 'Tiny Lore is an interactive constellation map of children\'s stories. Explore the night sky and discover tales told through the stars.',
+} = Astro.props;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://tiny-lore.vercel.app');
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -10,6 +15,20 @@ const { title = 'Tiny Lore — Where tiny moments meet infinite worlds' } = Astr
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl.href} />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl.href} />
+  <meta property="og:site_name" content="Tiny Lore" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />

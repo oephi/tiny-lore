@@ -19,7 +19,7 @@ const { name, subtitle, color, tracks } = entry.data;
 const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 ---
 
-<Layout title={`${name} — Tiny Lore`}>
+<Layout title={`${name} — Tiny Lore`} description={`${name}: ${subtitle}. A children's story told through the stars on Tiny Lore.`}>
   <!-- Entrance overlay that fades away -->
   <div class="entrance-overlay" id="entrance-overlay" style={`--accent: ${color};`}></div>
 
