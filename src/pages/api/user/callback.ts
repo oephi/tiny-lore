@@ -31,6 +31,10 @@ export const GET: APIRoute = async ({ request, url }) => {
     return new Response('Google OAuth not configured', { status: 500 });
   }
 
+  // Build redirect_uri — Vercel may report http behind its proxy, force https in production
+  const origin = url.origin.replace('http://', 'https://');
+  const redirectUri = `${origin}/api/user/callback`;
+
   // Exchange code for tokens
   const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
@@ -39,13 +43,14 @@ export const GET: APIRoute = async ({ request, url }) => {
       code,
       client_id: clientId,
       client_secret: clientSecret,
-      redirect_uri: `${url.origin}/api/user/callback`,
+      redirect_uri: redirectUri,
       grant_type: 'authorization_code',
     }),
   });
 
   if (!tokenRes.ok) {
-    return new Response('Failed to exchange authorization code', { status: 500 });
+    const errBody = await tokenRes.text();
+    return new Response(`Failed to exchange authorization code: ${errBody}`, { status: 500 });
   }
 
   const { access_token } = await tokenRes.json();

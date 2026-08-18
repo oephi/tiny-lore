@@ -14,7 +14,8 @@ export const GET: APIRoute = async ({ redirect, url }) => {
   // Encode the return URL in the state param so we can redirect back after login
   const returnTo = url.searchParams.get('redirect') || '/constellations';
   const state = generateState() + ':' + Buffer.from(returnTo).toString('base64url');
-  const redirectUri = `${url.origin}/api/user/callback`;
+  const origin = url.origin.replace('http://', 'https://');
+  const redirectUri = `${origin}/api/user/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,
