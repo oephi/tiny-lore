@@ -305,6 +305,10 @@ const allTracks = entries.flatMap(entry =>
         } else {
           trackList.classList.remove('collapsed');
           header.classList.add('open');
+          // After expand animation, scroll the group into view so it's not hidden behind the player
+          setTimeout(() => {
+            group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }, 100);
         }
       });
 
@@ -516,7 +520,7 @@ const allTracks = entries.flatMap(entry =>
     z-index: 10;
     background: #072e2c;
     overflow-y: auto;
-    padding: 5rem 1.5rem 5rem;
+    padding: 5rem 1.5rem 10rem;
   }
 
   .fav-bg-glow {
