@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createUserSessionToken, userSessionCookie } from '../../../lib/auth';
+import { getOrigin, exchangeCode, fetchGoogleUser } from '../../../lib/oauth';
 import { d1Query } from '../../../lib/d1';
 import { randomUUID } from 'node:crypto';
 
@@ -31,40 +32,22 @@ export const GET: APIRoute = async ({ request, url }) => {
     return new Response('Google OAuth not configured', { status: 500 });
   }
 
-  // Build redirect_uri — Vercel may report http behind its proxy, force https in production
-  const origin = import.meta.env.PROD ? url.origin.replace('http://', 'https://') : url.origin;
-  const redirectUri = `${origin}/api/user/callback`;
+  const redirectUri = `${getOrigin(url)}/api/user/callback`;
 
-  // Exchange code for tokens
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: redirectUri,
-      grant_type: 'authorization_code',
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    const errBody = await tokenRes.text();
-    return new Response(`Failed to exchange authorization code: ${errBody}`, { status: 500 });
+  let access_token: string;
+  try {
+    ({ access_token } = await exchangeCode(code, clientId, clientSecret, redirectUri));
+  } catch (err) {
+    return new Response(String(err), { status: 500 });
   }
 
-  const { access_token } = await tokenRes.json();
-
-  // Get user info from Google
-  const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
-
-  if (!userRes.ok) {
-    return new Response('Failed to get user info', { status: 500 });
+  let email: string;
+  let name: string | undefined;
+  try {
+    ({ email, name } = await fetchGoogleUser(access_token));
+  } catch (err) {
+    return new Response(String(err), { status: 500 });
   }
-
-  const { email, name } = await userRes.json();
 
   if (!email) {
     return new Response('No email returned from Google', { status: 400 });
@@ -80,7 +63,6 @@ export const GET: APIRoute = async ({ request, url }) => {
 
   if (existingResult.results.length > 0) {
     userId = existingResult.results[0].id as string;
-    // Update name in case it changed
     await d1Query('UPDATE users SET name = ? WHERE id = ?', [name || null, userId]);
   } else {
     userId = randomUUID();
@@ -90,7 +72,6 @@ export const GET: APIRoute = async ({ request, url }) => {
     );
   }
 
-  // Create session and redirect back
   // Use location.replace() instead of 302 so the OAuth flow doesn't stay in browser history
   const token = createUserSessionToken(userId, email);
   const safeReturnTo = returnTo.replace(/'/g, "\\'");

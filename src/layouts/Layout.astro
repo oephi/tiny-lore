@@ -38,11 +38,19 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://tiny-lor
       padding: 0;
       box-sizing: border-box;
     }
+    :root {
+      --bg: #072e2c;
+      --text: #f5efe0;
+      --gold: #c9a84c;
+      --glow-sm: 0 0 30px rgba(201, 168, 76, 0.25);
+      --glow-md: 0 0 40px rgba(201, 168, 76, 0.3);
+      --glow-lg: 0 0 60px rgba(201, 168, 76, 0.3);
+    }
     html, body {
       width: 100%;
       min-height: 100%;
-      background: #072e2c;
-      color: #f5efe0;
+      background: var(--bg);
+      color: var(--text);
       font-family: 'Lato', sans-serif;
     }
   </style>

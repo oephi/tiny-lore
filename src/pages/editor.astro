@@ -3,14 +3,10 @@ export const prerender = false;
 
 import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
-import { getSessionFromCookie, isEmailAllowed } from '../lib/auth';
+import { requireEditorAuth } from '../lib/auth';
 
-// Auth check in production
-if (import.meta.env.PROD) {
-  const session = getSessionFromCookie(Astro.request.headers.get('Cookie'));
-  if (!session || !isEmailAllowed(session.email)) {
-    return Astro.redirect('/api/auth/login');
-  }
+if (!requireEditorAuth(Astro.request)) {
+  return Astro.redirect('/api/auth/login');
 }
 
 const entries = await getCollection('constellations');

@@ -91,6 +91,8 @@ const allTracks = entries.flatMap(entry =>
 </script>
 
 <script>
+  import { formatTime as fmt } from '../../scripts/format';
+
   const allTracks: any[] = (window as any).__allTracks;
   const constellationMeta: Record<string, { stars: {x:number,y:number}[], lines: {from:number,to:number}[] }> = (window as any).__constellationMeta;
 
@@ -184,13 +186,6 @@ const allTracks = entries.flatMap(entry =>
   let isPlaying = false;
   // Flat list of rendered favorite tracks for next/prev
   let renderedTracks: any[] = [];
-
-  // Format seconds as m:ss
-  function fmt(s: number): string {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-  }
 
   // Fetch favorites from API
   async function loadFavorites() {

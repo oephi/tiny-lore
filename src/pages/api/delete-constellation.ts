@@ -1,12 +1,10 @@
 import type { APIRoute } from 'astro';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getSessionFromCookie, isEmailAllowed } from '../../lib/auth';
+import { requireEditorAuth } from '../../lib/auth';
+import { GITHUB_REPO, GITHUB_BRANCH } from '../../lib/github';
 
 export const prerender = false;
-
-const REPO = 'oephi/tiny-lore';
-const BRANCH = 'main';
 
 async function deleteLocal(slug: string) {
   const filePath = join(process.cwd(), 'src', 'content', 'constellations', `${slug}.md`);
@@ -20,7 +18,7 @@ async function deleteFromGitHub(slug: string) {
   }
 
   const path = `src/content/constellations/${slug}.md`;
-  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${path}`;
+  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
 
   // Get current file SHA (required for deletion)
   const existing = await fetch(apiUrl, {
@@ -46,7 +44,7 @@ async function deleteFromGitHub(slug: string) {
     body: JSON.stringify({
       message: `Delete constellation: ${slug}`,
       sha: data.sha,
-      branch: BRANCH,
+      branch: GITHUB_BRANCH,
     }),
   });
 
@@ -57,16 +55,14 @@ async function deleteFromGitHub(slug: string) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  const isProd = import.meta.env.PROD;
-  if (isProd) {
-    const session = getSessionFromCookie(request.headers.get('Cookie'));
-    if (!session || !isEmailAllowed(session.email)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+  if (!requireEditorAuth(request)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
+
+  const isProd = import.meta.env.PROD;
 
   const data = await request.json();
   const { filename } = data;

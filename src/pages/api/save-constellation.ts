@@ -1,12 +1,10 @@
 import type { APIRoute } from 'astro';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { getSessionFromCookie, isEmailAllowed } from '../../lib/auth';
+import { requireEditorAuth } from '../../lib/auth';
+import { GITHUB_REPO, GITHUB_BRANCH } from '../../lib/github';
 
 export const prerender = false;
-
-const REPO = 'oephi/tiny-lore';
-const BRANCH = 'main';
 
 function buildMarkdown(data: {
   name: string;
@@ -60,7 +58,7 @@ async function saveToGitHub(slug: string, content: string) {
   }
 
   const path = `src/content/constellations/${slug}.md`;
-  const apiUrl = `https://api.github.com/repos/${REPO}/contents/${path}`;
+  const apiUrl = `https://api.github.com/repos/${GITHUB_REPO}/contents/${path}`;
 
   // Check if file already exists (need its SHA to update)
   let sha: string | undefined;
@@ -79,7 +77,7 @@ async function saveToGitHub(slug: string, content: string) {
   const body: Record<string, string> = {
     message: sha ? `Update constellation: ${slug}` : `Add constellation: ${slug}`,
     content: btoa(unescape(encodeURIComponent(content))),
-    branch: BRANCH,
+    branch: GITHUB_BRANCH,
   };
   if (sha) body.sha = sha;
 
@@ -100,17 +98,14 @@ async function saveToGitHub(slug: string, content: string) {
 }
 
 export const POST: APIRoute = async ({ request }) => {
-  // Auth check — skip in dev, require session in production
-  const isProd = import.meta.env.PROD;
-  if (isProd) {
-    const session = getSessionFromCookie(request.headers.get('Cookie'));
-    if (!session || !isEmailAllowed(session.email)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      });
-    }
+  if (!requireEditorAuth(request)) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
+
+  const isProd = import.meta.env.PROD;
 
   const data = await request.json();
   const { filename, name } = data;

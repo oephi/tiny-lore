@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { generateState } from '../../../lib/auth';
+import { getOrigin } from '../../../lib/oauth';
 
 export const prerender = false;
 
@@ -10,7 +11,7 @@ export const GET: APIRoute = async ({ redirect, url }) => {
   }
 
   const state = generateState();
-  const redirectUri = `${url.origin}/api/auth/callback`;
+  const redirectUri = `${getOrigin(url)}/api/auth/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,

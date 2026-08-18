@@ -1,11 +1,12 @@
 import type { APIRoute } from 'astro';
 import { generateState } from '../../../lib/auth';
+import { getOrigin } from '../../../lib/oauth';
 
 export const prerender = false;
 
 // Redirects to Google OAuth. Uses a separate callback URL from the editor auth.
 // Accepts an optional ?redirect query param to return the user to the page they came from.
-export const GET: APIRoute = async ({ redirect, url }) => {
+export const GET: APIRoute = async ({ url }) => {
   const clientId = import.meta.env.GOOGLE_CLIENT_ID;
   if (!clientId) {
     return new Response('Google OAuth not configured', { status: 500 });
@@ -14,8 +15,7 @@ export const GET: APIRoute = async ({ redirect, url }) => {
   // Encode the return URL in the state param so we can redirect back after login
   const returnTo = url.searchParams.get('redirect') || '/constellations';
   const state = generateState() + ':' + Buffer.from(returnTo).toString('base64url');
-  const origin = import.meta.env.PROD ? url.origin.replace('http://', 'https://') : url.origin;
-  const redirectUri = `${origin}/api/user/callback`;
+  const redirectUri = `${getOrigin(url)}/api/user/callback`;
 
   const params = new URLSearchParams({
     client_id: clientId,

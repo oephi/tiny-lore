@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createSessionToken, isEmailAllowed, sessionCookie } from '../../../lib/auth';
+import { getOrigin, exchangeCode, fetchGoogleUser } from '../../../lib/oauth';
 
 export const prerender = false;
 
@@ -17,35 +18,21 @@ export const GET: APIRoute = async ({ request, redirect, url }) => {
     return new Response('Google OAuth not configured', { status: 500 });
   }
 
-  // Exchange code for tokens
-  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: `${url.origin}/api/auth/callback`,
-      grant_type: 'authorization_code',
-    }),
-  });
+  const redirectUri = `${getOrigin(url)}/api/auth/callback`;
 
-  if (!tokenRes.ok) {
-    return new Response('Failed to exchange authorization code', { status: 500 });
+  let access_token: string;
+  try {
+    ({ access_token } = await exchangeCode(code, clientId, clientSecret, redirectUri));
+  } catch (err) {
+    return new Response(String(err), { status: 500 });
   }
 
-  const { access_token } = await tokenRes.json();
-
-  // Get user info
-  const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-    headers: { Authorization: `Bearer ${access_token}` },
-  });
-
-  if (!userRes.ok) {
-    return new Response('Failed to get user info', { status: 500 });
+  let email: string;
+  try {
+    ({ email } = await fetchGoogleUser(access_token));
+  } catch (err) {
+    return new Response(String(err), { status: 500 });
   }
-
-  const { email } = await userRes.json();
 
   if (!email || !isEmailAllowed(email)) {
     return new Response(
@@ -61,10 +48,8 @@ export const GET: APIRoute = async ({ request, redirect, url }) => {
   }
 
   const token = createSessionToken(email);
-  const response = redirect('/editor', 302);
 
-  // Clone the response to add the cookie header
-  return new Response(response.body, {
+  return new Response(null, {
     status: 302,
     headers: {
       Location: '/editor',

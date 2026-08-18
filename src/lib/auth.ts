@@ -16,17 +16,15 @@ export interface UserSessionPayload {
   exp: number;
 }
 
-export function createSessionToken(email: string): string {
-  const payload: SessionPayload = {
-    email,
-    exp: Date.now() + MAX_AGE * 1000,
-  };
+// ── Generic HMAC token helpers ──
+
+function createSignedToken<T>(payload: T): string {
   const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
   const sig = createHmac('sha256', SECRET()).update(data).digest('base64url');
   return `${data}.${sig}`;
 }
 
-export function verifySessionToken(token: string): SessionPayload | null {
+function verifySignedToken<T>(token: string): T | null {
   const [data, sig] = token.split('.');
   if (!data || !sig) return null;
 
@@ -34,76 +32,78 @@ export function verifySessionToken(token: string): SessionPayload | null {
   if (sig !== expected) return null;
 
   try {
-    const payload: SessionPayload = JSON.parse(Buffer.from(data, 'base64url').toString());
+    const payload = JSON.parse(Buffer.from(data, 'base64url').toString()) as T & { exp: number };
     if (payload.exp < Date.now()) return null;
     return payload;
   } catch {
     return null;
   }
+}
+
+function getTokenFromCookie<T>(cookieHeader: string | null, cookieName: string): T | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`${cookieName}=([^;]+)`));
+  if (!match) return null;
+  return verifySignedToken<T>(match[1]);
+}
+
+function makeCookie(name: string, token: string): string {
+  return `${name}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}; Secure`;
+}
+
+function clearCookie(name: string): string {
+  return `${name}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`;
+}
+
+// ── Editor Auth ──
+
+export function createSessionToken(email: string): string {
+  return createSignedToken<SessionPayload>({ email, exp: Date.now() + MAX_AGE * 1000 });
+}
+
+export function getSessionFromCookie(cookieHeader: string | null): SessionPayload | null {
+  return getTokenFromCookie<SessionPayload>(cookieHeader, EDITOR_COOKIE);
 }
 
 export function isEmailAllowed(email: string): boolean {
   const allowed = import.meta.env.ALLOWED_EMAILS || '';
   if (!allowed) return false;
-  const list = allowed.split(',').map((e) => e.trim().toLowerCase());
+  const list = allowed.split(',').map((e: string) => e.trim().toLowerCase());
   return list.includes(email.toLowerCase());
 }
 
-export function getSessionFromCookie(cookieHeader: string | null): SessionPayload | null {
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`${EDITOR_COOKIE}=([^;]+)`));
-  if (!match) return null;
-  return verifySessionToken(match[1]);
-}
-
 export function sessionCookie(token: string): string {
-  return `${EDITOR_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}; Secure`;
+  return makeCookie(EDITOR_COOKIE, token);
 }
 
 export function clearSessionCookie(): string {
-  return `${EDITOR_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`;
+  return clearCookie(EDITOR_COOKIE);
+}
+
+/** Check editor auth on a request. Returns session or null. Skips check in dev. */
+export function requireEditorAuth(request: Request): SessionPayload | null {
+  if (!import.meta.env.PROD) return { email: 'dev@local', exp: Infinity };
+  const session = getSessionFromCookie(request.headers.get('Cookie'));
+  if (!session || !isEmailAllowed(session.email)) return null;
+  return session;
 }
 
 // ── Listener Auth ──
-// Separate session for public users (any Google account, no whitelist)
 
 export function createUserSessionToken(userId: string, email: string): string {
-  const payload: UserSessionPayload = {
-    userId,
-    email,
-    exp: Date.now() + MAX_AGE * 1000,
-  };
-  const data = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const sig = createHmac('sha256', SECRET()).update(data).digest('base64url');
-  return `${data}.${sig}`;
+  return createSignedToken<UserSessionPayload>({ userId, email, exp: Date.now() + MAX_AGE * 1000 });
 }
 
 export function getUserSessionFromCookie(cookieHeader: string | null): UserSessionPayload | null {
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`${USER_COOKIE}=([^;]+)`));
-  if (!match) return null;
-
-  const [data, sig] = match[1].split('.');
-  if (!data || !sig) return null;
-
-  const expected = createHmac('sha256', SECRET()).update(data).digest('base64url');
-  if (sig !== expected) return null;
-
-  try {
-    const payload: UserSessionPayload = JSON.parse(Buffer.from(data, 'base64url').toString());
-    if (payload.exp < Date.now()) return null;
-    return payload;
-  } catch {
-    return null;
-  }
+  return getTokenFromCookie<UserSessionPayload>(cookieHeader, USER_COOKIE);
 }
 
 export function userSessionCookie(token: string): string {
-  return `${USER_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${MAX_AGE}; Secure`;
+  return makeCookie(USER_COOKIE, token);
 }
 
 export function clearUserSessionCookie(): string {
-  return `${USER_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`;
+  return clearCookie(USER_COOKIE);
 }
 
 export function generateState(): string {

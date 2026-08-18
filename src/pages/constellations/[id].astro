@@ -90,6 +90,8 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 </Layout>
 
 <script>
+  import { formatTime as fmt } from '../../scripts/format';
+
   const audio = new Audio();
   const player = document.getElementById('player')!;
   const playBtn = document.getElementById('player-play')!;
@@ -165,13 +167,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       }
     });
   });
-
-  // Format seconds as m:ss
-  function fmt(s: number): string {
-    const m = Math.floor(s / 60);
-    const sec = Math.floor(s % 60);
-    return `${m}:${sec.toString().padStart(2, '0')}`;
-  }
 
   // Select and play a track by index
   function playTrack(index: number) {
