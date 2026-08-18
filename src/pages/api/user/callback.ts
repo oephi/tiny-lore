@@ -32,7 +32,7 @@ export const GET: APIRoute = async ({ request, url }) => {
   }
 
   // Build redirect_uri — Vercel may report http behind its proxy, force https in production
-  const origin = url.origin.replace('http://', 'https://');
+  const origin = import.meta.env.PROD ? url.origin.replace('http://', 'https://') : url.origin;
   const redirectUri = `${origin}/api/user/callback`;
 
   // Exchange code for tokens
