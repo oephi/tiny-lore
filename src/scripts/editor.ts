@@ -553,7 +553,7 @@ function draw() {
 
     // Star index label
     ctx.fillStyle = 'rgba(245, 239, 224, 0.35)';
-    ctx.font = '10px Lato, sans-serif';
+    ctx.font = '10px Quicksand, sans-serif';
     ctx.fillText(String(i), px + 8, py - 6);
   }
 
@@ -561,7 +561,7 @@ function draw() {
   if (mode === 'star') {
     const [mx, my] = pixelToCoord(mouseX, mouseY);
     ctx.fillStyle = 'rgba(245, 239, 224, 0.3)';
-    ctx.font = '11px Lato, sans-serif';
+    ctx.font = '11px Quicksand, sans-serif';
     ctx.fillText(`${mx}, ${my}`, mouseX + 14, mouseY - 8);
   }
 }
@@ -627,7 +627,7 @@ function drawMinimap() {
     }
 
     minimapCtx.fillStyle = hexToRgba(c.color, 0.5);
-    minimapCtx.font = '8px Lato, sans-serif';
+    minimapCtx.font = '8px Quicksand, sans-serif';
     minimapCtx.textAlign = 'center';
     minimapCtx.fillText(c.name, cx, cy - 12 * scale - 6);
     minimapCtx.textAlign = 'start';

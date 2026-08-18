@@ -6,7 +6,7 @@ import Layout from '../layouts/Layout.astro';
   <div class="landing">
     <canvas id="landing-stars"></canvas>
     <div class="landing-content">
-      <h1 class="landing-title">Tiny Lore</h1>
+      <h1 class="landing-title">TINY<br/>LORE</h1>
       <p class="landing-sub">Where tiny moments meet infinite worlds</p>
       <p class="landing-cta">click to enter</p>
     </div>
@@ -43,16 +43,37 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .landing-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(3.5rem, 10vw, 7rem);
+    font-family: 'Tan Mon Cheri', serif;
+    font-size: clamp(2.4rem, 7vw, 4.8rem);
     font-weight: 300;
-    color: #f5efe0;
     letter-spacing: 0.08em;
+    color: #b09850;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E"),
+      linear-gradient(
+        170deg,
+        #8a7535 0%,
+        #bfa258 18%,
+        #a08940 30%,
+        #ccad5e 42%,
+        #91793a 55%,
+        #b89c50 68%,
+        #a08940 80%,
+        #8a7535 100%
+      );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-shadow: 0 0 60px rgba(201, 168, 76, 0.3);
+    transition: filter 0.4s ease, letter-spacing 0.4s ease;
+  }
+
+  .landing-content:hover .landing-title {
+    letter-spacing: 0.14em;
   }
 
   .landing-sub {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.75rem;
     font-weight: 300;
     letter-spacing: 0.4em;
@@ -63,19 +84,24 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .landing-cta {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.65rem;
     font-weight: 300;
     letter-spacing: 0.3em;
     text-transform: uppercase;
-    color: rgba(245, 239, 224, 0.2);
+    color: #c9a84c;
     margin-top: 3rem;
-    animation: pulse-cta 3s ease-in-out infinite;
+    transition: opacity 0.4s ease, letter-spacing 0.4s ease;
+    opacity: 0;
   }
 
-  @keyframes pulse-cta {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 0.5; }
+  .landing-content:hover .landing-cta {
+    opacity: 0.7;
+    letter-spacing: 0.5em;
+  }
+
+  .landing-content:hover .landing-title {
+    filter: drop-shadow(0 0 12px rgba(201, 168, 76, 0.25));
   }
 </style>
 

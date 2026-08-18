@@ -17,7 +17,7 @@ const {
     ) : (
       <div class="brand">
         <a href="/constellations" class="brand-link">
-          <h1 class="brand-title">Tiny Lore</h1>
+          <h1 class="brand-title">TINY<br/>LORE</h1>
           <p class="brand-sub">Where tiny moments<br/>meet infinite worlds</p>
         </a>
       </div>
@@ -136,28 +136,44 @@ const {
   }
 
   .brand-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.3rem;
+    font-family: 'Tan Mon Cheri', serif;
+    font-size: 1.4rem;
     font-weight: 400;
-    color: #f5efe0;
     letter-spacing: 0.08em;
+    color: #b09850;
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.3'/%3E%3C/svg%3E"),
+      linear-gradient(
+        170deg,
+        #8a7535 0%,
+        #bfa258 18%,
+        #a08940 30%,
+        #ccad5e 42%,
+        #91793a 55%,
+        #b89c50 68%,
+        #a08940 80%,
+        #8a7535 100%
+      );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(201, 168, 76, 0.25);
   }
 
   .brand-sub {
-    font-size: 0.5rem;
+    font-size: 0.65rem;
     font-weight: 300;
     letter-spacing: 0.3em;
     text-transform: uppercase;
     color: #c9a84c;
-    opacity: 0.5;
+    opacity: 0.62;
     margin-top: 0.15rem;
   }
 
   /* ── Back Link ── */
   .back-link {
     display: inline-block;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.75rem;
     font-weight: 300;
     letter-spacing: 0.15em;
@@ -174,7 +190,7 @@ const {
 
   /* ── Sign In ── */
   .sign-in-link {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.7rem;
     font-weight: 300;
     letter-spacing: 0.12em;
@@ -254,7 +270,7 @@ const {
   }
 
   .logout-text {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 1.1rem;
     font-weight: 400;
     color: #f5efe0;
@@ -269,7 +285,7 @@ const {
   }
 
   .logout-btn {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.7rem;
     font-weight: 300;
     letter-spacing: 0.1em;

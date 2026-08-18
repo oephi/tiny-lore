@@ -74,6 +74,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
               <span class="player-time" id="player-time">0:00 / 0:00</span>
             </div>
           </div>
+          <button class="player-close" id="player-close">&times;</button>
         </div>
       </div>
 
@@ -252,6 +253,17 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     }
   });
 
+  // Close player
+  document.getElementById('player-close')?.addEventListener('click', () => {
+    audio.pause();
+    audio.src = '';
+    isPlaying = false;
+    currentIndex = -1;
+    playBtn.innerHTML = '&#9654;';
+    player.classList.add('hidden');
+    tracks.forEach(t => t.classList.remove('active'));
+  });
+
   // Intercept back links — use browser back to get the nice pageshow restore
   document.querySelectorAll<HTMLAnchorElement>('a[href="/constellations"]').forEach(link => {
     link.addEventListener('click', (e) => {
@@ -305,19 +317,19 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   .story-subtitle {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.68rem;
     font-weight: 300;
     letter-spacing: 0.35em;
     text-transform: uppercase;
+    margin-bottom: 1.2rem;
     color: #c9a84c;
     opacity: 0.7;
-    margin-bottom: 0.75rem;
   }
 
   .story-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    font-family: 'Tan Mon Cheri', serif;
+    font-size: clamp(1.5rem, 4vw, 2.4rem);
     font-weight: 300;
     color: #f5efe0;
     letter-spacing: 0.03em;
@@ -367,7 +379,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   .track-number {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.7rem;
     font-weight: 300;
     color: rgba(245, 239, 224, 0.3);
@@ -382,14 +394,14 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   .track-title {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 1.1rem;
     font-weight: 400;
     color: #f5efe0;
   }
 
   .track-duration {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.65rem;
     font-weight: 300;
     color: rgba(245, 239, 224, 0.35);
@@ -443,7 +455,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     bottom: calc(100% + 4px);
     right: calc(100% + 8px);
     white-space: nowrap;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.7rem;
     font-weight: 400;
     letter-spacing: 0.04em;
@@ -511,6 +523,9 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     opacity: 0;
     transform: translateY(10px);
     pointer-events: none;
+    margin: 0 -0.5rem;
+    height: 0;
+    overflow: hidden;
   }
 
   .player-inner {
@@ -523,6 +538,22 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
     border-radius: 10px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .player-close {
+    background: none;
+    border: none;
+    color: rgba(245, 239, 224, 0.3);
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.2rem 0.4rem;
+    flex-shrink: 0;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .player-close:hover {
+    color: rgba(245, 239, 224, 0.7);
   }
 
   .player-btn {
@@ -552,7 +583,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   .player-title {
     display: block;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.95rem;
     color: #f5efe0;
     white-space: nowrap;
@@ -585,7 +616,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   .player-time {
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.6rem;
     font-weight: 300;
     color: rgba(245, 239, 224, 0.35);
@@ -594,7 +625,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   /* ── Story Body ── */
   .story-body {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 1.25rem;
     font-weight: 400;
     line-height: 1.85;
@@ -629,7 +660,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   .story-footer .back-link {
     display: inline-block;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Quicksand', sans-serif;
     font-size: 0.75rem;
     font-weight: 300;
     letter-spacing: 0.15em;
