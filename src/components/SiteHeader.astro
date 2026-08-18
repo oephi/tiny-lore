@@ -34,6 +34,19 @@ const {
   </div>
 </header>
 
+<!-- Logout confirmation modal -->
+<div class="logout-modal hidden" id="logout-modal">
+  <div class="logout-backdrop" id="logout-backdrop"></div>
+  <div class="logout-dialog">
+    <div class="logout-ornament">&#10022;</div>
+    <p class="logout-text">Are you sure you want to sign out?</p>
+    <div class="logout-actions">
+      <button class="logout-btn logout-cancel" id="logout-cancel">Cancel</button>
+      <button class="logout-btn logout-confirm" id="logout-confirm">Sign out</button>
+    </div>
+  </div>
+</div>
+
 <script>
   // Check auth state and toggle sign-in / user icon
   async function checkAuth() {
@@ -54,10 +67,22 @@ const {
 
   checkAuth();
 
+  const logoutModal = document.getElementById('logout-modal')!;
+
   document.getElementById('user-menu')?.addEventListener('click', () => {
-    if (confirm('Sign out?')) {
-      window.location.href = '/api/user/logout';
-    }
+    logoutModal.classList.remove('hidden');
+  });
+
+  document.getElementById('logout-cancel')?.addEventListener('click', () => {
+    logoutModal.classList.add('hidden');
+  });
+
+  document.getElementById('logout-backdrop')?.addEventListener('click', () => {
+    logoutModal.classList.add('hidden');
+  });
+
+  document.getElementById('logout-confirm')?.addEventListener('click', () => {
+    window.location.href = '/api/user/logout';
   });
 </script>
 
@@ -167,5 +192,89 @@ const {
 
   .hidden {
     display: none !important;
+  }
+
+  /* ── Logout Modal ── */
+  .logout-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .logout-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+  }
+
+  .logout-dialog {
+    position: relative;
+    background: #0d1b1a;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 12px;
+    padding: 2rem 2.5rem;
+    text-align: center;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(201, 168, 76, 0.05);
+    max-width: 320px;
+    width: 90%;
+  }
+
+  .logout-ornament {
+    color: #c9a84c;
+    opacity: 0.25;
+    font-size: 0.8rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .logout-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-weight: 400;
+    color: #f5efe0;
+    margin-bottom: 1.8rem;
+    line-height: 1.4;
+  }
+
+  .logout-actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+  }
+
+  .logout-btn {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  .logout-cancel {
+    background: rgba(245, 239, 224, 0.08);
+    color: rgba(245, 239, 224, 0.6);
+  }
+
+  .logout-cancel:hover {
+    background: rgba(245, 239, 224, 0.14);
+    color: #f5efe0;
+  }
+
+  .logout-confirm {
+    background: rgba(201, 168, 76, 0.15);
+    color: #c9a84c;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+  }
+
+  .logout-confirm:hover {
+    background: rgba(201, 168, 76, 0.25);
   }
 </style>
