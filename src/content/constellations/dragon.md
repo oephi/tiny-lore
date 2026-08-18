@@ -33,6 +33,10 @@ lines:
     to: 5
   - from: 2
     to: 6
+tracks:
+  - title: "Dragon's Lair"
+    duration: "3:55"
+    file: "GoldenSun-stillness-final-v2.wav"
 ---
 
 In the mountain where the great dragons lived, everything was fire and thunder. They roared so loud the clouds ran away. They breathed flames so high the eagles had to take detours.

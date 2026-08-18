@@ -2,13 +2,451 @@
 import Layout from '../../layouts/Layout.astro';
 import ConstellationCanvas from '../../components/ConstellationCanvas.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
+import { getCollection } from 'astro:content';
+
+// Build a lookup of all tracks across all constellations
+const entries = await getCollection('constellations');
+const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
+
+// Constellation metadata for mini renderings
+const constellationMeta = Object.fromEntries(
+  entries.map(entry => [entry.id, {
+    stars: entry.data.stars,
+    lines: entry.data.lines,
+  }])
+);
+
+const allTracks = entries.flatMap(entry =>
+  (entry.data.tracks || []).map(track => ({
+    trackId: `${entry.id}/${track.file}`,
+    title: track.title,
+    duration: track.duration,
+    file: track.file,
+    src: `${AUDIO_BASE}/${track.file}`,
+    constellationId: entry.id,
+    constellationName: entry.data.name,
+    color: entry.data.color,
+  }))
+);
 ---
 
 <Layout>
   <div class="page-fade"></div>
   <ConstellationCanvas />
   <SiteHeader loginRedirect="/constellations" />
+
+  <!-- Favorites view (hidden by default) -->
+  <div class="favorites-view hidden" id="favorites-view">
+    <div class="fav-bg-glow"></div>
+    <div class="favorites-inner">
+      <header class="fav-header">
+        <div class="fav-ornament">&#10022;</div>
+        <h2 class="fav-title">My Tiny Lore</h2>
+        <p class="fav-subtitle">Your collected starlight</p>
+      </header>
+
+      <div class="favorites-empty" id="favorites-empty">
+        <div class="empty-stars">
+          <span>&#10022;</span><span>&#10022;</span><span>&#10022;</span>
+        </div>
+        <p class="empty-text">No favourites yet</p>
+        <p class="empty-sub">Tap the heart on any track to save it here</p>
+      </div>
+      <div class="favorites-list" id="favorites-list"></div>
+
+      <!-- Sticky player bar for favorites view -->
+      <div class="player hidden" id="fav-player">
+        <div class="player-inner">
+          <button class="player-btn" id="fav-player-play">&#9654;</button>
+          <div class="player-details">
+            <span class="player-title" id="fav-player-title"></span>
+            <div class="player-progress">
+              <div class="player-bar" id="fav-player-bar">
+                <div class="player-fill" id="fav-player-fill"></div>
+              </div>
+              <span class="player-time" id="fav-player-time">0:00 / 0:00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom tab bar -->
+  <nav class="tab-bar" id="tab-bar">
+    <button class="tab active" data-tab="universe" id="tab-universe">
+      <span class="tab-icon">&#10022;</span>
+      <span class="tab-label">Tiny Lore Universe</span>
+    </button>
+    <button class="tab" data-tab="favorites" id="tab-favorites">
+      <span class="tab-icon">&#9825;</span>
+      <span class="tab-label">My Tiny Lore</span>
+    </button>
+  </nav>
 </Layout>
+
+<script define:vars={{ allTracks, constellationMeta }}>
+  window.__allTracks = allTracks;
+  window.__constellationMeta = constellationMeta;
+</script>
+
+<script>
+  const allTracks: any[] = (window as any).__allTracks;
+  const constellationMeta: Record<string, { stars: {x:number,y:number}[], lines: {from:number,to:number}[] }> = (window as any).__constellationMeta;
+
+  // Draw a mini constellation into a canvas element
+  function drawMiniConstellation(canvas: HTMLCanvasElement, constellationId: string, color: string) {
+    const meta = constellationMeta[constellationId];
+    if (!meta || !meta.stars.length) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const size = 36;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = size + 'px';
+    canvas.style.height = size + 'px';
+
+    const ctx = canvas.getContext('2d')!;
+    ctx.scale(dpr, dpr);
+
+    const stars = meta.stars;
+    const lines = meta.lines;
+
+    // Find bounding box and fit into canvas with padding
+    const xs = stars.map(s => s.x);
+    const ys = stars.map(s => s.y);
+    const minX = Math.min(...xs), maxX = Math.max(...xs);
+    const minY = Math.min(...ys), maxY = Math.max(...ys);
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    const pad = 6;
+    const scale = Math.min((size - pad * 2) / rangeX, (size - pad * 2) / rangeY);
+    const offX = (size - rangeX * scale) / 2;
+    const offY = (size - rangeY * scale) / 2;
+
+    function tx(x: number) { return (x - minX) * scale + offX; }
+    function ty(y: number) { return (y - minY) * scale + offY; }
+
+    // Draw lines
+    ctx.strokeStyle = color;
+    ctx.globalAlpha = 0.35;
+    ctx.lineWidth = 1;
+    for (const line of lines) {
+      const a = stars[line.from];
+      const b = stars[line.to];
+      if (!a || !b) continue;
+      ctx.beginPath();
+      ctx.moveTo(tx(a.x), ty(a.y));
+      ctx.lineTo(tx(b.x), ty(b.y));
+      ctx.stroke();
+    }
+
+    // Draw stars
+    ctx.globalAlpha = 0.8;
+    ctx.fillStyle = color;
+    for (const star of stars) {
+      ctx.beginPath();
+      ctx.arc(tx(star.x), ty(star.y), 1.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Glow on stars
+    ctx.globalAlpha = 0.25;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 4;
+    for (const star of stars) {
+      ctx.beginPath();
+      ctx.arc(tx(star.x), ty(star.y), 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  const canvasApp = document.getElementById('constellation-app')!;
+  const favView = document.getElementById('favorites-view')!;
+  const favList = document.getElementById('favorites-list')!;
+  const favEmpty = document.getElementById('favorites-empty')!;
+  const tabUniverse = document.getElementById('tab-universe')!;
+  const tabFavorites = document.getElementById('tab-favorites')!;
+
+  // Player elements
+  const audio = new Audio();
+  const playerEl = document.getElementById('fav-player')!;
+  const playBtn = document.getElementById('fav-player-play')!;
+  const titleEl = document.getElementById('fav-player-title')!;
+  const fillEl = document.getElementById('fav-player-fill')!;
+  const barEl = document.getElementById('fav-player-bar')!;
+  const timeEl = document.getElementById('fav-player-time')!;
+
+  let currentTab = 'universe';
+  let favorites: string[] = [];
+  let loggedIn = false;
+  let currentTrackId = '';
+  let isPlaying = false;
+  // Flat list of rendered favorite tracks for next/prev
+  let renderedTracks: any[] = [];
+
+  // Format seconds as m:ss
+  function fmt(s: number): string {
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  }
+
+  // Fetch favorites from API
+  async function loadFavorites() {
+    try {
+      const res = await fetch('/api/user/favorites');
+      const data = await res.json();
+      loggedIn = data.loggedIn;
+      favorites = data.favorites || [];
+    } catch { /* silently fail */ }
+  }
+
+  // Play a track by its data
+  function playTrack(track: any) {
+    currentTrackId = track.trackId;
+    audio.src = track.src;
+    audio.play();
+    isPlaying = true;
+
+    playerEl.classList.remove('hidden');
+    playerEl.style.setProperty('--accent', track.color);
+    titleEl.textContent = track.title;
+    playBtn.innerHTML = '&#9646;&#9646;';
+
+    // Update active states on track rows
+    favList.querySelectorAll('.track').forEach((el: Element) => {
+      const row = el as HTMLElement;
+      if (row.dataset.trackId === track.trackId) {
+        row.classList.add('active');
+        row.style.setProperty('--accent', track.color);
+      } else {
+        row.classList.remove('active');
+      }
+    });
+  }
+
+  // Render the favorites list
+  function renderFavorites() {
+    favList.innerHTML = '';
+    renderedTracks = [];
+
+    const favTracks = allTracks.filter(t => favorites.includes(t.trackId));
+
+    if (favTracks.length === 0) {
+      favEmpty.classList.remove('hidden');
+      favList.classList.add('hidden');
+      playerEl.classList.add('hidden');
+      return;
+    }
+
+    favEmpty.classList.add('hidden');
+    favList.classList.remove('hidden');
+
+    // Group by constellation
+    const grouped: Record<string, any[]> = {};
+    for (const t of favTracks) {
+      if (!grouped[t.constellationId]) grouped[t.constellationId] = [];
+      grouped[t.constellationId].push(t);
+    }
+
+    let trackIndex = 0;
+
+    for (const [constellationId, tracks] of Object.entries(grouped)) {
+      const first = (tracks as any[])[0];
+      const group = document.createElement('div');
+      group.className = 'track-group';
+      group.style.setProperty('--accent', first.color);
+
+      // Collapsible header with mini constellation
+      const header = document.createElement('button');
+      header.className = 'group-header';
+
+      const miniCanvas = document.createElement('canvas');
+      miniCanvas.className = 'group-constellation';
+      header.appendChild(miniCanvas);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'group-name';
+      nameSpan.textContent = first.constellationName;
+      header.appendChild(nameSpan);
+
+      const countSpan = document.createElement('span');
+      countSpan.className = 'group-count';
+      countSpan.textContent = `${(tracks as any[]).length} track${(tracks as any[]).length > 1 ? 's' : ''}`;
+      header.appendChild(countSpan);
+
+      const chevron = document.createElement('span');
+      chevron.className = 'group-chevron';
+      chevron.innerHTML = '&#9662;';
+      header.appendChild(chevron);
+
+      group.appendChild(header);
+
+      // Draw the mini constellation after it's in the DOM
+      requestAnimationFrame(() => {
+        drawMiniConstellation(miniCanvas, constellationId, first.color);
+      });
+
+      const trackList = document.createElement('div');
+      trackList.className = 'track-list collapsed';
+      trackList.style.setProperty('--accent', first.color);
+
+      // Toggle collapse on header click
+      header.addEventListener('click', () => {
+        const isOpen = !trackList.classList.contains('collapsed');
+        if (isOpen) {
+          trackList.classList.add('collapsed');
+          header.classList.remove('open');
+        } else {
+          trackList.classList.remove('collapsed');
+          header.classList.add('open');
+        }
+      });
+
+      for (let i = 0; i < (tracks as any[]).length; i++) {
+        const track = (tracks as any[])[i];
+        renderedTracks.push(track);
+
+        const row = document.createElement('div');
+        row.className = 'track';
+        row.dataset.trackId = track.trackId;
+        row.style.setProperty('--accent', track.color);
+
+        if (track.trackId === currentTrackId && isPlaying) {
+          row.classList.add('active');
+          // Auto-open the group containing the playing track
+          trackList.classList.remove('collapsed');
+          header.classList.add('open');
+        }
+
+        row.innerHTML = `
+          <span class="track-number">${String(i + 1).padStart(2, '0')}</span>
+          <span class="track-info">
+            <span class="track-title">${track.title}</span>
+            <span class="track-duration">${track.duration}</span>
+          </span>
+          <span class="track-play-icon">&#9654;</span>
+          <button class="fav-btn favorited" data-track-id="${track.trackId}" aria-label="Remove favorite">
+            <svg viewBox="0 0 24 24" class="heart-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </button>
+        `;
+
+        // Track click — play/pause
+        row.addEventListener('click', (e) => {
+          if ((e.target as HTMLElement).closest('.fav-btn')) return;
+          if (track.trackId === currentTrackId && isPlaying) {
+            audio.pause();
+            isPlaying = false;
+            playBtn.innerHTML = '&#9654;';
+            row.classList.remove('active');
+          } else {
+            playTrack(track);
+          }
+        });
+
+        // Unfavorite handler
+        row.querySelector('.fav-btn')!.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          try {
+            const res = await fetch('/api/user/favorites', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ trackId: track.trackId }),
+            });
+            const data = await res.json();
+            if (!data.favorited) {
+              favorites = favorites.filter(f => f !== track.trackId);
+              renderFavorites();
+            }
+          } catch { /* silently fail */ }
+        });
+
+        trackList.appendChild(row);
+      }
+
+      group.appendChild(trackList);
+      favList.appendChild(group);
+    }
+  }
+
+  // Player controls
+  playBtn.addEventListener('click', () => {
+    if (isPlaying) {
+      audio.pause();
+      isPlaying = false;
+      playBtn.innerHTML = '&#9654;';
+      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.remove('active');
+    } else {
+      audio.play();
+      isPlaying = true;
+      playBtn.innerHTML = '&#9646;&#9646;';
+      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.add('active');
+    }
+  });
+
+  audio.addEventListener('timeupdate', () => {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    fillEl.style.width = pct + '%';
+    timeEl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
+  });
+
+  barEl.addEventListener('click', (e) => {
+    const rect = barEl.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audio.currentTime = pct * audio.duration;
+  });
+
+  // Auto-play next track
+  audio.addEventListener('ended', () => {
+    const curIdx = renderedTracks.findIndex(t => t.trackId === currentTrackId);
+    if (curIdx >= 0 && curIdx + 1 < renderedTracks.length) {
+      playTrack(renderedTracks[curIdx + 1]);
+    } else {
+      isPlaying = false;
+      playBtn.innerHTML = '&#9654;';
+      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.remove('active');
+    }
+  });
+
+  // Tab switching
+  function switchTab(tab: string) {
+    currentTab = tab;
+
+    if (tab === 'universe') {
+      canvasApp.style.display = '';
+      favView.classList.add('hidden');
+      tabUniverse.classList.add('active');
+      tabFavorites.classList.remove('active');
+      // Stop audio when leaving favorites
+      if (isPlaying) {
+        audio.pause();
+        isPlaying = false;
+      }
+      playerEl.classList.add('hidden');
+    } else {
+      canvasApp.style.display = 'none';
+      favView.classList.remove('hidden');
+      tabUniverse.classList.remove('active');
+      tabFavorites.classList.add('active');
+      renderFavorites();
+    }
+  }
+
+  tabUniverse.addEventListener('click', () => switchTab('universe'));
+  tabFavorites.addEventListener('click', () => {
+    if (!loggedIn) {
+      const signIn = document.getElementById('sign-in-link');
+      if (signIn) window.location.href = signIn.getAttribute('href')!;
+      return;
+    }
+    switchTab('favorites');
+  });
+
+  // Load favorites on page load
+  loadFavorites();
+</script>
 
 <style>
   .page-fade {
@@ -23,5 +461,476 @@ import SiteHeader from '../../components/SiteHeader.astro';
   @keyframes fade-out {
     0%   { opacity: 1; }
     100% { opacity: 0; }
+  }
+
+  /* ── Tab Bar ── */
+  .tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    background: rgba(7, 46, 44, 0.92);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(201, 168, 76, 0.1);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.75rem 0.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(245, 239, 224, 0.35);
+    transition: color 0.2s;
+  }
+
+  .tab:hover {
+    color: rgba(245, 239, 224, 0.55);
+  }
+
+  .tab.active {
+    color: #c9a84c;
+  }
+
+  .tab-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .tab-label {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* ── Favorites View ── */
+  .favorites-view {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    background: #072e2c;
+    overflow-y: auto;
+    padding: 5rem 1.5rem 5rem;
+  }
+
+  .fav-bg-glow {
+    position: fixed;
+    top: -30%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120%;
+    height: 60%;
+    background: radial-gradient(ellipse at center, rgba(201, 168, 76, 0.04) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .favorites-inner {
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .hidden {
+    display: none !important;
+  }
+
+  /* ── Favorites Header ── */
+  .fav-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    padding-top: 1rem;
+  }
+
+  .fav-ornament {
+    color: #c9a84c;
+    opacity: 0.25;
+    font-size: 0.9rem;
+    letter-spacing: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .fav-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-weight: 300;
+    color: #f5efe0;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+    text-shadow: 0 0 40px rgba(201, 168, 76, 0.15);
+  }
+
+  .fav-subtitle {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 300;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.45;
+  }
+
+  /* ── Empty State ── */
+  .favorites-empty {
+    text-align: center;
+    padding: 3rem 1rem 4rem;
+  }
+
+  .empty-stars {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: rgba(201, 168, 76, 0.15);
+    font-size: 0.7rem;
+  }
+
+  .empty-stars span:nth-child(2) {
+    font-size: 1rem;
+    margin-top: -0.15rem;
+  }
+
+  .empty-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #f5efe0;
+    opacity: 0.45;
+    margin-bottom: 0.6rem;
+  }
+
+  .empty-sub {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: rgba(245, 239, 224, 0.25);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Dynamically created elements need :global() ── */
+
+  :global(.track-group) {
+    margin-bottom: 0.75rem;
+  }
+
+  :global(.group-header) {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 1rem 1.2rem;
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent, #c9a84c) 6%, transparent),
+      color-mix(in srgb, var(--accent, #c9a84c) 2%, transparent)
+    );
+    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 12%, transparent);
+    border-radius: 10px;
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  :global(.group-header)::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in srgb, var(--accent, #c9a84c) 25%, transparent),
+      transparent
+    );
+  }
+
+  :global(.group-header):hover {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent, #c9a84c) 10%, transparent),
+      color-mix(in srgb, var(--accent, #c9a84c) 4%, transparent)
+    );
+    border-color: color-mix(in srgb, var(--accent, #c9a84c) 22%, transparent);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--accent, #c9a84c) 8%, transparent);
+  }
+
+  :global(.group-header.open) {
+    border-radius: 10px 10px 2px 2px;
+    border-bottom-color: color-mix(in srgb, var(--accent, #c9a84c) 6%, transparent);
+    box-shadow: 0 4px 20px color-mix(in srgb, var(--accent, #c9a84c) 6%, transparent);
+  }
+
+  :global(.group-constellation) {
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+    opacity: 0.85;
+  }
+
+  :global(.group-name) {
+    flex: 1;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: var(--accent, #c9a84c);
+    text-shadow: 0 0 24px color-mix(in srgb, var(--accent, #c9a84c) 35%, transparent);
+  }
+
+  :global(.group-count) {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 300;
+    color: rgba(245, 239, 224, 0.28);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-right: 0.85rem;
+  }
+
+  :global(.group-chevron) {
+    font-size: 0.65rem;
+    color: color-mix(in srgb, var(--accent, #c9a84c) 50%, transparent);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  :global(.group-header.open .group-chevron) {
+    transform: rotate(180deg);
+  }
+
+  :global(.track-list) {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    overflow: hidden;
+    max-height: 1000px;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s ease;
+    opacity: 1;
+    background: color-mix(in srgb, var(--accent, #c9a84c) 3%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 8%, transparent);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    padding: 4px;
+  }
+
+  :global(.track-list.collapsed) {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 4px;
+    border-color: transparent;
+  }
+
+  :global(.track) {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.75rem 0.85rem;
+    background: rgba(7, 46, 44, 0.5);
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+  }
+
+  :global(.track):hover {
+    background: rgba(7, 46, 44, 0.3);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  :global(.track.active) {
+    background: color-mix(in srgb, var(--accent) 10%, rgba(7, 46, 44, 0.6));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--accent) 25%, transparent),
+      0 0 12px color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+
+  :global(.track-number) {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 300;
+    color: rgba(245, 239, 224, 0.22);
+    min-width: 1.4rem;
+  }
+
+  :global(.track-info) {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  :global(.track-title) {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: #f5efe0;
+  }
+
+  :global(.track-duration) {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 300;
+    color: rgba(245, 239, 224, 0.3);
+    letter-spacing: 0.05em;
+  }
+
+  :global(.track-play-icon) {
+    font-size: 0.65rem;
+    color: rgba(245, 239, 224, 0.18);
+    transition: color 0.2s;
+  }
+
+  :global(.track:hover .track-play-icon),
+  :global(.track.active .track-play-icon) {
+    color: var(--accent);
+  }
+
+  :global(.fav-btn) {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  :global(.fav-btn):hover {
+    transform: scale(1.2);
+  }
+
+  :global(.fav-btn):active {
+    transform: scale(0.9);
+  }
+
+  :global(.heart-icon) {
+    width: 15px;
+    height: 15px;
+    fill: rgba(245, 239, 224, 0.12);
+    transition: fill 0.2s;
+  }
+
+  :global(.fav-btn:hover .heart-icon) {
+    fill: rgba(245, 239, 224, 0.3);
+  }
+
+  :global(.fav-btn.favorited .heart-icon) {
+    fill: #e74c6f;
+    filter: drop-shadow(0 0 4px rgba(231, 76, 111, 0.3));
+  }
+
+  :global(.fav-btn.favorited:hover .heart-icon) {
+    fill: #d43a5d;
+  }
+
+  /* ── Player Bar ── */
+  .player {
+    position: sticky;
+    bottom: 4rem;
+    z-index: 30;
+    margin: 1.5rem -0.25rem 2rem;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .player.hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+  }
+
+  .player-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.75rem 1rem;
+    background: rgba(7, 46, 44, 0.94);
+    backdrop-filter: blur(16px);
+    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 18%, transparent);
+    border-radius: 12px;
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      0 0 20px color-mix(in srgb, var(--accent, #c9a84c) 6%, transparent);
+  }
+
+  .player-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 35%, transparent);
+    background: color-mix(in srgb, var(--accent, #c9a84c) 8%, transparent);
+    color: var(--accent, #c9a84c);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .player-btn:hover {
+    background: color-mix(in srgb, var(--accent, #c9a84c) 16%, transparent);
+    box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #c9a84c) 15%, transparent);
+  }
+
+  .player-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .player-title {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.95rem;
+    color: #f5efe0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 0.35rem;
+  }
+
+  .player-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .player-bar {
+    flex: 1;
+    height: 3px;
+    background: rgba(245, 239, 224, 0.08);
+    border-radius: 2px;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  .player-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent, #c9a84c);
+    border-radius: 2px;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 6px color-mix(in srgb, var(--accent, #c9a84c) 40%, transparent);
+  }
+
+  .player-time {
+    font-family: 'Lato', sans-serif;
+    font-size: 0.58rem;
+    font-weight: 300;
+    color: rgba(245, 239, 224, 0.3);
+    white-space: nowrap;
   }
 </style>

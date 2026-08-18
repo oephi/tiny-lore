@@ -39,11 +39,11 @@ lines:
     to: 7
 tracks:
   - title: "The Bear's Lullaby"
-    duration: "3:42"
+    duration: "0:44"
     file: "drone-type-B-2-notes.wav"
   - title: "Counting Stars"
-    duration: "2:58"
-    file: "bear/02-counting-stars.mp3"
+    duration: "1:28"
+    file: "Drone-type-C-low-G.wav"
   - title: "Guardian of the Forest"
     duration: "4:15"
     file: "bear/03-guardian-of-the-forest.mp3"

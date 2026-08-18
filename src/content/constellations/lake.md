@@ -37,6 +37,10 @@ lines:
     to: 6
   - from: 6
     to: 2
+tracks:
+  - title: "The mist"
+    duration: "4:38"
+    file: "GoldenSun-unity-final-original-version.wav"
 ---
 
 There was a lake so still that the sky forgot where it ended and the water began.
