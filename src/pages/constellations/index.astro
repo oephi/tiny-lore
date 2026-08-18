@@ -425,7 +425,7 @@ const allTracks = entries.flatMap(entry =>
       favView.classList.add('hidden');
       tabUniverse.classList.add('active');
       tabFavorites.classList.remove('active');
-      if (headerLeft) headerLeft.style.display = '';
+      if (headerLeft) headerLeft.classList.remove('hide-mobile');
       // Stop audio when leaving favorites
       if (isPlaying) {
         audio.pause();
@@ -437,7 +437,7 @@ const allTracks = entries.flatMap(entry =>
       favView.classList.remove('hidden');
       tabUniverse.classList.remove('active');
       tabFavorites.classList.add('active');
-      if (headerLeft) headerLeft.style.display = 'none';
+      if (headerLeft) headerLeft.classList.add('hide-mobile');
       renderFavorites();
     }
   }
@@ -458,6 +458,12 @@ const allTracks = entries.flatMap(entry =>
     background: #072e2c;
     pointer-events: none;
     animation: fade-out 1.5s ease-out forwards;
+  }
+
+  @media (max-width: 768px) {
+    :global(.header-left.hide-mobile) {
+      display: none !important;
+    }
   }
 
   @keyframes fade-out {
