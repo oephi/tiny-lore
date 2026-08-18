@@ -22,6 +22,7 @@ const existing = entries.map((e) => ({
   center: e.data.center,
   stars: e.data.stars,
   lines: e.data.lines,
+  tracks: e.data.tracks || [],
   body: (e as any).body || '',
 }));
 ---
@@ -83,6 +84,12 @@ const existing = entries.map((e) => ({
       <div class="field">
         <label for="story">Story</label>
         <textarea id="story" placeholder="Write your story here..."></textarea>
+      </div>
+
+      <div class="field">
+        <label>Tracks</label>
+        <div id="tracks-list" class="tracks-list"></div>
+        <button id="btn-add-track" class="action-btn">+ Add Track</button>
       </div>
 
       <div class="actions">
@@ -359,6 +366,70 @@ const existing = entries.map((e) => ({
   .action-btn.danger:hover {
     background: rgba(224, 96, 80, 0.15);
     border-color: #e06050;
+  }
+
+  .tracks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .track-entry {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(201, 168, 76, 0.12);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .track-entry input {
+    padding: 0.35rem 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(201, 168, 76, 0.15);
+    border-radius: 2px;
+    color: #f5efe0;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.78rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .track-entry input:focus {
+    border-color: rgba(201, 168, 76, 0.5);
+  }
+
+  .track-entry .track-row {
+    display: flex;
+    gap: 0.3rem;
+  }
+
+  .track-entry .track-row input:first-child {
+    flex: 1;
+  }
+
+  .track-entry .track-row input:last-child {
+    width: 55px;
+  }
+
+  .track-remove {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    background: none;
+    border: none;
+    color: rgba(224, 96, 80, 0.5);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0 0.2rem;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .track-remove:hover {
+    color: #e06050;
   }
 
   .hidden {

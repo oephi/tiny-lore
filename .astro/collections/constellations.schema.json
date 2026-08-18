@@ -62,6 +62,29 @@
         ]
       }
     },
+    "tracks": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "duration",
+          "file"
+        ]
+      }
+    },
     "$schema": {
       "type": "string"
     }

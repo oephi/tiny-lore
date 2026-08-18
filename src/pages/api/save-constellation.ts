@@ -15,9 +15,10 @@ function buildMarkdown(data: {
   center: { x: number; y: number };
   stars: { x: number; y: number }[];
   lines: { from: number; to: number }[];
+  tracks?: { title: string; duration: string; file: string }[];
   story: string;
 }): string {
-  const { name, subtitle, color, center, stars, lines, story } = data;
+  const { name, subtitle, color, center, stars, lines, tracks = [], story } = data;
 
   const starsYaml = stars.length
     ? `stars:\n${stars.map((s) => `  - x: ${s.x}\n    y: ${s.y}`).join('\n')}`
@@ -26,6 +27,10 @@ function buildMarkdown(data: {
   const linesYaml = lines.length
     ? `lines:\n${lines.map((l) => `  - from: ${l.from}\n    to: ${l.to}`).join('\n')}`
     : 'lines: []';
+
+  const tracksYaml = tracks.length
+    ? `tracks:\n${tracks.map((t) => `  - title: "${t.title}"\n    duration: "${t.duration}"\n    file: "${t.file}"`).join('\n')}`
+    : 'tracks: []';
 
   return `---
 name: ${name}
@@ -36,9 +41,10 @@ center:
   y: ${center?.y ?? 0}
 ${starsYaml}
 ${linesYaml}
+${tracksYaml}
 ---
 
-${story || 'Write your story here.'}
+${story || ''}
 `;
 }
 

@@ -12,8 +12,15 @@ export interface Constellation {
   lines: { from: number; to: number }[];
 }
 
-// Extended with story body text, used by the editor when loading existing constellations
+export interface Track {
+  title: string;
+  duration: string;
+  file: string;
+}
+
+// Extended with story body text and tracks, used by the editor when loading existing constellations
 export interface ExistingConstellation extends Constellation {
+  tracks: Track[];
   body: string;
 }
 

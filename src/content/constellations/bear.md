@@ -37,6 +37,16 @@ lines:
     to: 6
   - from: 2
     to: 7
+tracks:
+  - title: "The Bear's Lullaby"
+    duration: "3:42"
+    file: "bear/01-the-bears-lullaby.mp3"
+  - title: "Counting Stars"
+    duration: "2:58"
+    file: "bear/02-counting-stars.mp3"
+  - title: "Guardian of the Forest"
+    duration: "4:15"
+    file: "bear/03-guardian-of-the-forest.mp3"
 ---
 
 Deep in the oldest part of the forest, where the trees grew so tall their tops disappeared into clouds, there lived a bear with fur the colour of autumn leaves.

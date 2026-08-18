@@ -1,4 +1,4 @@
-import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type ExistingConstellation } from './shared';
+import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type ExistingConstellation, type Track } from './shared';
 
 const canvas = document.getElementById('editor-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -35,6 +35,60 @@ let currentLoadedId = '';  // Tracks which constellation is loaded (empty = new)
 const modeStarBtn = document.getElementById('mode-star')!;
 const modeLineBtn = document.getElementById('mode-line')!;
 const modeDeleteBtn = document.getElementById('mode-delete')!;
+
+// ── Tracks ──
+const tracksList = document.getElementById('tracks-list')!;
+const addTrackBtn = document.getElementById('btn-add-track')!;
+let tracks: Track[] = [];
+
+// Create a track entry row in the sidebar UI
+function createTrackEntry(track: Track, index: number): HTMLDivElement {
+  const el = document.createElement('div');
+  el.className = 'track-entry';
+  el.innerHTML = `
+    <div class="track-row">
+      <input type="text" placeholder="Track title" value="${track.title.replace(/"/g, '&quot;')}" data-field="title" />
+      <input type="text" placeholder="3:42" value="${track.duration}" data-field="duration" />
+    </div>
+    <input type="text" placeholder="bear/01-filename.mp3" value="${track.file.replace(/"/g, '&quot;')}" data-field="file" />
+    <button class="track-remove" title="Remove track">&times;</button>
+  `;
+
+  // Sync input changes back to the tracks array
+  el.querySelectorAll('input').forEach((input) => {
+    input.addEventListener('input', () => {
+      const field = input.dataset.field as keyof Track;
+      tracks[index][field] = input.value;
+    });
+  });
+
+  // Remove track button
+  el.querySelector('.track-remove')!.addEventListener('click', () => {
+    tracks.splice(index, 1);
+    renderTracks();
+  });
+
+  return el;
+}
+
+// Re-render all track entries in the sidebar
+function renderTracks() {
+  tracksList.innerHTML = '';
+  tracks.forEach((track, i) => {
+    tracksList.appendChild(createTrackEntry(track, i));
+  });
+}
+
+// Add a blank track
+addTrackBtn.addEventListener('click', () => {
+  tracks.push({ title: '', duration: '', file: '' });
+  renderTracks();
+  // Focus the title input of the new track
+  const lastEntry = tracksList.lastElementChild;
+  if (lastEntry) {
+    (lastEntry.querySelector('input[data-field="title"]') as HTMLInputElement)?.focus();
+  }
+});
 
 // ── Minimap ──
 const minimap = document.getElementById('minimap') as HTMLCanvasElement;
@@ -256,6 +310,8 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
   }
 
   // Convert internal tuple format to object format for the API
+  // Filter out empty tracks (no title or file)
+  const validTracks = tracks.filter(t => t.title.trim() || t.file.trim());
   const payload = {
     filename,
     name,
@@ -264,6 +320,7 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
     center: { x: centerX, y: centerY },
     stars: stars.map(([x, y]) => ({ x, y })),
     lines: lines.map(([a, b]) => ({ from: a, to: b })),
+    tracks: validTracks,
     story: storyInput.value,
   };
 
@@ -296,6 +353,10 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
 
   const starsStr = stars.map(([x, y]) => `  - x: ${x}\n    y: ${y}`).join('\n');
   const linesStr = lines.map(([a, b]) => `  - from: ${a}\n    to: ${b}`).join('\n');
+  const validTracks = tracks.filter(t => t.title.trim() || t.file.trim());
+  const tracksStr = validTracks.map(t =>
+    `  - title: "${t.title}"\n    duration: "${t.duration}"\n    file: "${t.file}"`
+  ).join('\n');
 
   const md = `---
 name: ${name}
@@ -306,6 +367,7 @@ center:
   y: ${centerY}
 ${stars.length ? `stars:\n${starsStr}` : 'stars: []'}
 ${lines.length ? `lines:\n${linesStr}` : 'lines: []'}
+${validTracks.length ? `tracks:\n${tracksStr}` : 'tracks: []'}
 ---
 
 ${story}
@@ -362,6 +424,7 @@ function loadConstellation(id: string) {
   if (!c) {
     stars = [];
     lines = [];
+    tracks = [];
     nameInput.value = '';
     subtitleInput.value = '';
     colorInput.value = '#c9a84c';
@@ -371,6 +434,7 @@ function loadConstellation(id: string) {
     centerY = 0;
     history = [];
     lineStart = null;
+    renderTracks();
     updateCounts();
     draw();
     drawMinimap();
@@ -379,6 +443,7 @@ function loadConstellation(id: string) {
 
   stars = c.stars.map((s) => [s.x, s.y] as [number, number]);
   lines = c.lines.map((l) => [l.from, l.to] as [number, number]);
+  tracks = c.tracks.map((t) => ({ ...t }));
   nameInput.value = c.name;
   subtitleInput.value = c.subtitle;
   colorInput.value = c.color;
@@ -388,6 +453,7 @@ function loadConstellation(id: string) {
   centerY = c.center.y;
   history = [];
   lineStart = null;
+  renderTracks();
   updateCounts();
   draw();
   drawMinimap();
