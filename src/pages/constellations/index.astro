@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import ConstellationCanvas from '../../components/ConstellationCanvas.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
+import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection } from 'astro:content';
 
 // Build a lookup of all tracks across all constellations
@@ -58,18 +59,7 @@ const allTracks = entries.flatMap(entry =>
 
   <!-- Fixed player bar above tab bar -->
   <div class="fav-player-wrapper hidden" id="fav-player">
-    <div class="player-inner">
-      <button class="player-btn" id="fav-player-play">&#9654;</button>
-      <div class="player-details">
-        <span class="player-title" id="fav-player-title"></span>
-        <div class="player-progress">
-          <div class="player-bar" id="fav-player-bar">
-            <div class="player-fill" id="fav-player-fill"></div>
-          </div>
-          <span class="player-time" id="fav-player-time">0:00 / 0:00</span>
-        </div>
-      </div>
-    </div>
+    <AudioPlayer id="fav-player" />
   </div>
 
   <!-- Bottom tab bar -->
@@ -411,6 +401,17 @@ const allTracks = entries.flatMap(entry =>
       playBtn.innerHTML = '&#9654;';
       favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.remove('active');
     }
+  });
+
+  // Close player
+  document.getElementById('fav-player-close')?.addEventListener('click', () => {
+    audio.pause();
+    audio.src = '';
+    isPlaying = false;
+    currentTrackId = '';
+    playBtn.innerHTML = '&#9654;';
+    playerEl.classList.add('hidden');
+    favList.querySelectorAll('.track').forEach(t => t.classList.remove('active'));
   });
 
   // Tab switching
@@ -850,86 +851,4 @@ const allTracks = entries.flatMap(entry =>
     pointer-events: none;
   }
 
-  .player-inner {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.75rem 1rem;
-    background: rgba(7, 46, 44, 0.94);
-    backdrop-filter: blur(16px);
-    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 18%, transparent);
-    border-radius: 12px;
-    box-shadow:
-      0 4px 24px rgba(0, 0, 0, 0.4),
-      0 0 20px color-mix(in srgb, var(--accent, #c9a84c) 6%, transparent);
-  }
-
-  .player-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 35%, transparent);
-    background: color-mix(in srgb, var(--accent, #c9a84c) 8%, transparent);
-    color: var(--accent, #c9a84c);
-    font-size: 0.75rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.2s, box-shadow 0.2s;
-  }
-
-  .player-btn:hover {
-    background: color-mix(in srgb, var(--accent, #c9a84c) 16%, transparent);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--accent, #c9a84c) 15%, transparent);
-  }
-
-  .player-details {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .player-title {
-    display: block;
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.95rem;
-    color: #f5efe0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 0.35rem;
-  }
-
-  .player-progress {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .player-bar {
-    flex: 1;
-    height: 3px;
-    background: rgba(245, 239, 224, 0.08);
-    border-radius: 2px;
-    cursor: pointer;
-    overflow: hidden;
-  }
-
-  .player-fill {
-    height: 100%;
-    width: 0%;
-    background: var(--accent, #c9a84c);
-    border-radius: 2px;
-    transition: width 0.1s linear;
-    box-shadow: 0 0 6px color-mix(in srgb, var(--accent, #c9a84c) 40%, transparent);
-  }
-
-  .player-time {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.58rem;
-    font-weight: 300;
-    color: rgba(245, 239, 224, 0.3);
-    white-space: nowrap;
-  }
 </style>

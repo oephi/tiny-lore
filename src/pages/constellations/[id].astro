@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
+import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -63,19 +64,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
       <!-- Sticky player bar — hidden until a track is selected -->
       <div class="player hidden" id="player" style={`--accent: ${color};`}>
-        <div class="player-inner">
-          <button class="player-btn" id="player-play">&#9654;</button>
-          <div class="player-details">
-            <span class="player-title" id="player-title"></span>
-            <div class="player-progress">
-              <div class="player-bar" id="player-bar">
-                <div class="player-fill" id="player-fill"></div>
-              </div>
-              <span class="player-time" id="player-time">0:00 / 0:00</span>
-            </div>
-          </div>
-          <button class="player-close" id="player-close">&times;</button>
-        </div>
+        <AudioPlayer id="player" />
       </div>
 
       <div class="story-body">
@@ -528,100 +517,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     overflow: hidden;
   }
 
-  .player-inner {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    padding: 0.75rem 1rem;
-    background: rgba(7, 46, 44, 0.92);
-    backdrop-filter: blur(12px);
-    border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
-    border-radius: 10px;
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  }
-
-  .player-close {
-    background: none;
-    border: none;
-    color: rgba(245, 239, 224, 0.3);
-    font-size: 1.1rem;
-    cursor: pointer;
-    padding: 0.2rem 0.4rem;
-    flex-shrink: 0;
-    transition: color 0.2s;
-    line-height: 1;
-  }
-
-  .player-close:hover {
-    color: rgba(245, 239, 224, 0.7);
-  }
-
-  .player-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
-    background: color-mix(in srgb, var(--accent) 10%, transparent);
-    color: var(--accent);
-    font-size: 0.75rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: background 0.2s;
-  }
-
-  .player-btn:hover {
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-  }
-
-  .player-details {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .player-title {
-    display: block;
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.95rem;
-    color: #f5efe0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 0.35rem;
-  }
-
-  .player-progress {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .player-bar {
-    flex: 1;
-    height: 4px;
-    background: rgba(245, 239, 224, 0.1);
-    border-radius: 2px;
-    cursor: pointer;
-    overflow: hidden;
-  }
-
-  .player-fill {
-    height: 100%;
-    width: 0%;
-    background: var(--accent);
-    border-radius: 2px;
-    transition: width 0.1s linear;
-  }
-
-  .player-time {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.6rem;
-    font-weight: 300;
-    color: rgba(245, 239, 224, 0.35);
-    white-space: nowrap;
-  }
 
   /* ── Story Body ── */
   .story-body {
