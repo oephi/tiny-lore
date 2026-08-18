@@ -73,7 +73,7 @@ const allTracks = entries.flatMap(entry =>
   </div>
 
   <!-- Bottom tab bar -->
-  <nav class="tab-bar" id="tab-bar">
+  <nav class="tab-bar hidden" id="tab-bar">
     <button class="tab active" data-tab="universe" id="tab-universe">
       <span class="tab-icon">&#10022;</span>
       <span class="tab-label">Tiny Lore Universe</span>
@@ -199,6 +199,10 @@ const allTracks = entries.flatMap(entry =>
       const data = await res.json();
       loggedIn = data.loggedIn;
       favorites = data.favorites || [];
+
+      if (loggedIn) {
+        document.getElementById('tab-bar')!.classList.remove('hidden');
+      }
     } catch { /* silently fail */ }
   }
 
@@ -435,14 +439,7 @@ const allTracks = entries.flatMap(entry =>
   }
 
   tabUniverse.addEventListener('click', () => switchTab('universe'));
-  tabFavorites.addEventListener('click', () => {
-    if (!loggedIn) {
-      const signIn = document.getElementById('sign-in-link');
-      if (signIn) window.location.href = signIn.getAttribute('href')!;
-      return;
-    }
-    switchTab('favorites');
-  });
+  tabFavorites.addEventListener('click', () => switchTab('favorites'));
 
   // Load favorites on page load
   loadFavorites();

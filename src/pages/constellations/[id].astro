@@ -112,10 +112,19 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       loggedIn = data.loggedIn;
       userFavorites = new Set(data.favorites);
 
-      // Update heart states
       document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
-        if (userFavorites.has(btn.dataset.trackId!)) {
-          btn.classList.add('favorited');
+        if (loggedIn) {
+          btn.classList.add('enabled');
+          if (userFavorites.has(btn.dataset.trackId!)) {
+            btn.classList.add('favorited');
+          }
+        } else {
+          btn.classList.add('disabled');
+          // Add custom tooltip
+          const tip = document.createElement('span');
+          tip.className = 'fav-tooltip';
+          tip.textContent = 'Sign in to save favourites';
+          btn.appendChild(tip);
         }
       });
     } catch { /* silently fail */ }
@@ -130,9 +139,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       e.stopPropagation();
 
       if (!loggedIn) {
-        // Redirect to login, return to this page
-        const signInLink = document.getElementById('sign-in-link');
-        if (signInLink) window.location.href = signInLink.getAttribute('href')!;
         return;
       }
 
@@ -400,7 +406,61 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     cursor: pointer;
     padding: 0.3rem;
     flex-shrink: 0;
-    transition: transform 0.2s;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+
+  :global(.fav-btn.disabled) {
+    cursor: not-allowed;
+    position: relative;
+  }
+
+  :global(.fav-btn.disabled .heart-icon) {
+    opacity: 0.25;
+  }
+
+  :global(.fav-btn.disabled):hover {
+    transform: none;
+  }
+
+  :global(.fav-btn.disabled:hover .heart-icon) {
+    opacity: 0.4;
+  }
+
+  :global(.fav-btn.disabled):active {
+    transform: none;
+  }
+
+  :global(.fav-tooltip) {
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: calc(100% + 8px);
+    white-space: nowrap;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    color: #e0dce8;
+    background-color: #2a2535;
+    border: none;
+    border-radius: 6px;
+    padding: 0.5rem 0.85rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+    visibility: hidden;
+    z-index: 50;
+  }
+
+  :global(.fav-tooltip)::after {
+    content: '';
+    position: absolute;
+    bottom: 6px;
+    left: 100%;
+    border: 5px solid transparent;
+    border-left-color: #2a2535;
+  }
+
+  :global(.fav-btn.disabled:hover .fav-tooltip) {
+    visibility: visible;
   }
 
   .fav-btn:hover {
