@@ -40,7 +40,7 @@ lines:
 tracks:
   - title: "The Bear's Lullaby"
     duration: "3:42"
-    file: "bear/01-the-bears-lullaby.mp3"
+    file: "drone-type-B-2-notes.wav"
   - title: "Counting Stars"
     duration: "2:58"
     file: "bear/02-counting-stars.mp3"
