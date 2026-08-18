@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import SiteHeader from '../../components/SiteHeader.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -22,8 +23,9 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   <!-- Entrance overlay that fades away -->
   <div class="entrance-overlay" style={`--accent: ${color};`}></div>
 
+  <SiteHeader backHref="/constellations" loginRedirect={`/constellations/${entry.id}`} />
+
   <div class="story-page">
-    <a href="/constellations" class="back-link">&larr; Back to the sky</a>
 
     <article class="story">
       <header class="story-header">
@@ -35,7 +37,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       {tracks.length > 0 && (
         <div class="track-list" style={`--accent: ${color};`}>
           {tracks.map((track, i) => (
-            <button
+            <div
               class="track"
               data-src={`${AUDIO_BASE}/${track.file}`}
               data-index={i}
@@ -47,7 +49,14 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
                 <span class="track-duration">{track.duration}</span>
               </span>
               <span class="track-play-icon">&#9654;</span>
-            </button>
+              <button
+                class="fav-btn"
+                data-track-id={`${entry.id}/${track.file}`}
+                aria-label="Favorite"
+              >
+                <svg viewBox="0 0 24 24" class="heart-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+              </button>
+            </div>
           ))}
         </div>
       )}
@@ -88,10 +97,68 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   const fillEl = document.getElementById('player-fill')!;
   const barEl = document.getElementById('player-bar')!;
   const timeEl = document.getElementById('player-time')!;
-  const tracks = document.querySelectorAll<HTMLButtonElement>('.track');
+  const tracks = document.querySelectorAll<HTMLDivElement>('.track');
 
   let currentIndex = -1;
   let isPlaying = false;
+  let loggedIn = false;
+  let userFavorites: Set<string> = new Set();
+
+  // Fetch user favorites and auth state on load
+  async function loadFavorites() {
+    try {
+      const res = await fetch('/api/user/favorites');
+      const data = await res.json();
+      loggedIn = data.loggedIn;
+      userFavorites = new Set(data.favorites);
+
+      // Update heart states
+      document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
+        if (userFavorites.has(btn.dataset.trackId!)) {
+          btn.classList.add('favorited');
+        }
+      });
+    } catch { /* silently fail */ }
+  }
+
+  loadFavorites();
+
+  // Handle favorite button clicks
+  document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!loggedIn) {
+        // Redirect to login, return to this page
+        const signInLink = document.getElementById('sign-in-link');
+        if (signInLink) window.location.href = signInLink.getAttribute('href')!;
+        return;
+      }
+
+      const trackId = btn.dataset.trackId!;
+      btn.classList.toggle('favorited');
+
+      try {
+        const res = await fetch('/api/user/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ trackId }),
+        });
+        const data = await res.json();
+        if (data.favorited) {
+          userFavorites.add(trackId);
+          btn.classList.add('favorited');
+        } else {
+          userFavorites.delete(trackId);
+          btn.classList.remove('favorited');
+        }
+      } catch {
+        // Revert on error
+        btn.classList.toggle('favorited');
+      }
+    });
+  });
 
   // Format seconds as m:ss
   function fmt(s: number): string {
@@ -125,7 +192,9 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   // Track click handlers
   tracks.forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      // Ignore clicks on the favorite button
+      if ((e.target as HTMLElement).closest('.fav-btn')) return;
       const index = Number(btn.dataset.index);
       if (index === currentIndex && isPlaying) {
         // Clicking active track pauses it
@@ -201,7 +270,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     min-height: 100vh;
     overflow-y: auto;
     background: #072e2c;
-    padding: 2rem;
+    padding: 5rem 2rem 2rem;
     animation: content-emerge 1.4s ease-out 0.3s both;
   }
 
@@ -209,23 +278,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     0%   { opacity: 0; transform: scale(0.92) translateY(40px); }
     60%  { opacity: 1; transform: scale(1) translateY(8px); }
     100% { opacity: 1; transform: scale(1) translateY(0); }
-  }
-
-  .back-link {
-    display: inline-block;
-    font-family: 'Lato', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 300;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: #c9a84c;
-    text-decoration: none;
-    opacity: 0.6;
-    transition: opacity 0.2s;
-  }
-
-  .back-link:hover {
-    opacity: 1;
   }
 
   .story {
@@ -339,6 +391,43 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   .track:hover .track-play-icon,
   .track.active .track-play-icon {
     color: var(--accent);
+  }
+
+  /* ── Favorite Button ── */
+  .fav-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.3rem;
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+
+  .fav-btn:hover {
+    transform: scale(1.2);
+  }
+
+  .fav-btn:active {
+    transform: scale(0.9);
+  }
+
+  .heart-icon {
+    width: 16px;
+    height: 16px;
+    fill: rgba(245, 239, 224, 0.15);
+    transition: fill 0.2s;
+  }
+
+  .fav-btn:hover .heart-icon {
+    fill: rgba(245, 239, 224, 0.3);
+  }
+
+  .fav-btn.favorited .heart-icon {
+    fill: #e74c6f;
+  }
+
+  .fav-btn.favorited:hover .heart-icon {
+    fill: #d43a5d;
   }
 
   /* ── Player Bar ── */
@@ -471,6 +560,20 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   }
 
   .story-footer .back-link {
+    display: inline-block;
+    font-family: 'Lato', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    text-decoration: none;
+    opacity: 0.6;
+    transition: opacity 0.2s;
     margin-top: 2rem;
+  }
+
+  .story-footer .back-link:hover {
+    opacity: 1;
   }
 </style>

@@ -54,7 +54,7 @@ async function saveLocal(slug: string, content: string) {
 }
 
 async function saveToGitHub(slug: string, content: string) {
-  const token = process.env.GITHUB_TOKEN;
+  const token = import.meta.env.GITHUB_TOKEN;
   if (!token) {
     throw new Error('GITHUB_TOKEN environment variable is not set');
   }

@@ -14,7 +14,7 @@ async function deleteLocal(slug: string) {
 }
 
 async function deleteFromGitHub(slug: string) {
-  const token = process.env.GITHUB_TOKEN;
+  const token = import.meta.env.GITHUB_TOKEN;
   if (!token) {
     throw new Error('GITHUB_TOKEN environment variable is not set');
   }
