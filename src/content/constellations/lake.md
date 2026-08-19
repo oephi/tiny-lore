@@ -59,8 +59,6 @@ It is like the world has held its breath, existing in the gaps in between.
 
 Only when the night reaches its deepest point does the midnight moon begin to stir, a silver glow in the darkness. 
 
-Pause 
-
 Then… a single twinkle of light responds on the waters below.  Then another. And another. One here, one there. Again and again. Like fireflies along the lake’s surface. 
 
 The lake takes each spark, holds it close for a moment, then slowly lets it go, high into the sky. 
