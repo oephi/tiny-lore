@@ -14,7 +14,7 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
-const { name, subtitle, color, image, tracks } = entry.data;
+const { name, subtitle, color, image, quote, tracks } = entry.data;
 
 // R2 bucket base URL — update this once your bucket is live
 const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
@@ -38,6 +38,12 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
         <div class="story-image">
           <img src={image} alt={name} />
         </div>
+      )}
+
+      {quote && (
+        <blockquote class="story-quote">
+          &ldquo;{quote}&rdquo;
+        </blockquote>
       )}
 
       {tracks.length > 0 && (
@@ -350,6 +356,21 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
     width: 100%;
     height: auto;
     object-fit: contain;
+  }
+
+  /* ── Story Quote ── */
+  .story-quote {
+    text-align: center;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.6;
+    color: rgba(245, 239, 224, 0.7);
+    max-width: 360px;
+    margin: 0 auto 2.5rem;
+    border: none;
+    padding: 0;
   }
 
   /* ── Track List ── */

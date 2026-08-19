@@ -12,6 +12,7 @@ export interface Constellation {
   lines: { from: number; to: number }[];
   hidden?: boolean;
   image?: string;
+  quote?: string;
 }
 
 export interface Track {

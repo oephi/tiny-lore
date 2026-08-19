@@ -20,6 +20,7 @@ const existing = entries.map((e) => ({
   lines: e.data.lines,
   hidden: e.data.hidden || false,
   image: e.data.image || '',
+  quote: e.data.quote || '',
   tracks: e.data.tracks || [],
   body: (e as any).body || '',
 }));
@@ -76,6 +77,11 @@ const existing = entries.map((e) => ({
         </div>
         <div id="image-preview" class="image-preview"></div>
         <div id="image-feedback" class="image-feedback hidden"></div>
+      </div>
+
+      <div class="field">
+        <label for="quote">Quote</label>
+        <input type="text" id="quote" placeholder="In Tiny Lore, there is a world..." />
       </div>
 
       <div class="field">

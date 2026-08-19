@@ -57,6 +57,7 @@ const storyInput = document.getElementById('story') as HTMLTextAreaElement;
 const imageInput = document.getElementById('image') as HTMLInputElement;
 const imagePreview = document.getElementById('image-preview')!;
 const hiddenToggle = document.getElementById('hidden-toggle') as HTMLInputElement;
+const quoteInput = document.getElementById('quote') as HTMLInputElement;
 const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
 const saveFeedback = document.getElementById('save-feedback')!;
@@ -352,6 +353,7 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
     color: colorInput.value,
     hidden: hidden || undefined,
     image: image || undefined,
+    quote: quoteInput.value.trim() || undefined,
     center: { x: centerX, y: centerY },
     stars: stars.map(([x, y]) => ({ x, y })),
     lines: lines.map(([a, b]) => ({ from: a, to: b })),
@@ -398,7 +400,7 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
   const md = `---
 name: ${name}
 subtitle: ${subtitle}
-color: "${color}"${hidden ? `\nhidden: true` : ''}${image ? `\nimage: "${image}"` : ''}
+color: "${color}"${hidden ? `\nhidden: true` : ''}${image ? `\nimage: "${image}"` : ''}${quoteInput.value.trim() ? `\nquote: "${quoteInput.value.trim()}"` : ''}
 center:
   x: ${centerX}
   y: ${centerY}
@@ -468,6 +470,7 @@ function loadConstellation(id: string) {
     filenameInput.value = '';
     storyInput.value = '';
     imageInput.value = '';
+    quoteInput.value = '';
     hiddenToggle.checked = false;
     updateImagePreview();
     centerX = 0;
@@ -490,6 +493,7 @@ function loadConstellation(id: string) {
   filenameInput.value = c.id;
   storyInput.value = c.body.trim();
   imageInput.value = c.image || '';
+  quoteInput.value = c.quote || '';
   hiddenToggle.checked = c.hidden || false;
   updateImagePreview();
   centerX = c.center.x;
