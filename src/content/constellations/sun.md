@@ -24,8 +24,6 @@ stars:
     y: 0
   - x: -85
     y: 0
-  - x: -480
-    y: 40
 lines:
   - from: 0
     to: 1
@@ -51,7 +49,7 @@ tracks:
     file: "golden-hour/golden-hour-3.1.flac"
 ---
 
-In tiny lore, there is a world that is neither day nor night. 
+In Tiny Lore, there is a world that is neither day nor night. 
 
 This world exists in the in-between. 
 
