@@ -10,6 +10,7 @@ export interface Constellation {
   center: { x: number; y: number };
   stars: { x: number; y: number }[];
   lines: { from: number; to: number }[];
+  image?: string;
 }
 
 export interface Track {

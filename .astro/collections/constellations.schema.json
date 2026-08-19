@@ -62,6 +62,9 @@
         ]
       }
     },
+    "image": {
+      "type": "string"
+    },
     "tracks": {
       "default": [],
       "type": "array",

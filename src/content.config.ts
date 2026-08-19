@@ -10,6 +10,7 @@ const constellations = defineCollection({
     center: z.object({ x: z.number(), y: z.number() }),
     stars: z.array(z.object({ x: z.number(), y: z.number() })),
     lines: z.array(z.object({ from: z.number(), to: z.number() })),
+    image: z.string().optional(),
     tracks: z.array(z.object({
       title: z.string(),
       duration: z.string(),

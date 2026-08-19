@@ -18,6 +18,7 @@ const existing = entries.map((e) => ({
   center: e.data.center,
   stars: e.data.stars,
   lines: e.data.lines,
+  image: e.data.image || '',
   tracks: e.data.tracks || [],
   body: (e as any).body || '',
 }));
@@ -56,6 +57,17 @@ const existing = entries.map((e) => ({
       <div class="field">
         <label for="filename">Filename</label>
         <input type="text" id="filename" placeholder="bear" />
+      </div>
+
+      <div class="field">
+        <label for="image">Image</label>
+        <div class="image-upload-row">
+          <input type="text" id="image" placeholder="/images/constellations/bear.png" />
+          <label class="upload-btn" for="image-file">Upload</label>
+          <input type="file" id="image-file" accept="image/*" class="sr-only" />
+        </div>
+        <div id="image-preview" class="image-preview"></div>
+        <div id="image-feedback" class="image-feedback hidden"></div>
       </div>
 
       <div class="field">
@@ -267,6 +279,72 @@ const existing = entries.map((e) => ({
     border-radius: 2px;
     background: transparent;
     cursor: pointer;
+  }
+
+  .image-upload-row {
+    display: flex;
+    gap: 0.3rem;
+  }
+
+  .image-upload-row input[type="text"] {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .upload-btn {
+    padding: 0.5rem 0.7rem;
+    background: rgba(201, 168, 76, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 2px;
+    color: #c9a84c;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .upload-btn:hover {
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.4);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .image-feedback {
+    font-size: 0.68rem;
+    color: #80c060;
+    transition: opacity 0.3s;
+  }
+
+  .image-feedback.error {
+    color: #e06050;
+  }
+
+  .image-feedback.hidden {
+    opacity: 0;
+  }
+
+  .image-preview {
+    border-radius: 4px;
+    overflow: hidden;
+    max-height: 120px;
+  }
+
+  .image-preview img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    max-height: 120px;
   }
 
   #minimap {

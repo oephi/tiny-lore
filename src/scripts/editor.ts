@@ -54,6 +54,8 @@ const subtitleInput = document.getElementById('subtitle') as HTMLInputElement;
 const colorInput = document.getElementById('color') as HTMLInputElement;
 const filenameInput = document.getElementById('filename') as HTMLInputElement;
 const storyInput = document.getElementById('story') as HTMLTextAreaElement;
+const imageInput = document.getElementById('image') as HTMLInputElement;
+const imagePreview = document.getElementById('image-preview')!;
 const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
 const saveFeedback = document.getElementById('save-feedback')!;
@@ -340,11 +342,13 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
   // Convert internal tuple format to object format for the API
   // Filter out empty tracks (no title or file)
   const validTracks = tracks.filter(t => t.title.trim() || t.file.trim());
+  const image = imageInput.value.trim();
   const payload = {
     filename,
     name,
     subtitle: subtitleInput.value,
     color: colorInput.value,
+    image: image || undefined,
     center: { x: centerX, y: centerY },
     stars: stars.map(([x, y]) => ({ x, y })),
     lines: lines.map(([a, b]) => ({ from: a, to: b })),
@@ -386,10 +390,11 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
     `  - title: "${t.title}"\n    duration: "${t.duration}"\n    file: "${t.file}"`
   ).join('\n');
 
+  const image = imageInput.value.trim();
   const md = `---
 name: ${name}
 subtitle: ${subtitle}
-color: "${color}"
+color: "${color}"${image ? `\nimage: "${image}"` : ''}
 center:
   x: ${centerX}
   y: ${centerY}
@@ -458,6 +463,8 @@ function loadConstellation(id: string) {
     colorInput.value = '#c9a84c';
     filenameInput.value = '';
     storyInput.value = '';
+    imageInput.value = '';
+    updateImagePreview();
     centerX = 0;
     centerY = 0;
     history = [];
@@ -477,6 +484,8 @@ function loadConstellation(id: string) {
   colorInput.value = c.color;
   filenameInput.value = c.id;
   storyInput.value = c.body.trim();
+  imageInput.value = c.image || '';
+  updateImagePreview();
   centerX = c.center.x;
   centerY = c.center.y;
   history = [];
@@ -503,6 +512,63 @@ colorInput.addEventListener('input', () => { draw(); drawMinimap(); });
 // Redraw canvas when name/subtitle change (for the preview label)
 nameInput.addEventListener('input', () => draw());
 subtitleInput.addEventListener('input', () => draw());
+
+// Image preview
+function updateImagePreview() {
+  const url = imageInput.value.trim();
+  if (url) {
+    imagePreview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML=''" />`;
+  } else {
+    imagePreview.innerHTML = '';
+  }
+}
+imageInput.addEventListener('input', updateImagePreview);
+
+// Image upload
+const imageFileInput = document.getElementById('image-file') as HTMLInputElement;
+const imageFeedback = document.getElementById('image-feedback')!;
+
+function showImageFeedback(msg: string, isError = false) {
+  imageFeedback.textContent = msg;
+  imageFeedback.classList.toggle('error', isError);
+  imageFeedback.classList.remove('hidden');
+  setTimeout(() => imageFeedback.classList.add('hidden'), 3000);
+}
+
+imageFileInput.addEventListener('change', async () => {
+  const file = imageFileInput.files?.[0];
+  if (!file) return;
+
+  // Use the constellation filename as the image name, or fall back to the file name
+  const name = filenameInput.value.trim() || file.name.replace(/\.[^.]+$/, '');
+
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('name', name);
+
+  showImageFeedback('Uploading...');
+
+  try {
+    const res = await fetch('/api/upload-image', {
+      method: 'POST',
+      body: formData,
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      imageInput.value = data.url;
+      updateImagePreview();
+      showImageFeedback('Uploaded!');
+    } else {
+      showImageFeedback(data.error || 'Upload failed.', true);
+    }
+  } catch {
+    showImageFeedback('Network error.', true);
+  }
+
+  // Reset the file input so the same file can be re-uploaded
+  imageFileInput.value = '';
+});
 
 // ── Main Canvas Drawing ──
 // Renders the editor view: grid, constellation lines, pending line, stars with labels,
