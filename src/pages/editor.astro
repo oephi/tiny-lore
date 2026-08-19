@@ -72,6 +72,21 @@ const existing = entries.map((e) => ({
         </div>
       </div>
 
+      <div class="tools">
+        <h2>Grid</h2>
+        <div class="grid-controls">
+          <label class="toggle-label">
+            <input type="checkbox" id="snap-toggle" checked />
+            <span>Snap to grid</span>
+          </label>
+          <div class="grid-size-row">
+            <label class="grid-size-label" for="grid-size">Size</label>
+            <input type="range" id="grid-size" min="10" max="60" step="10" value="20" />
+            <span id="grid-size-display" class="grid-size-value">20px</span>
+          </div>
+        </div>
+      </div>
+
       <div class="info">
         <p id="star-count">Stars: 0</p>
         <p id="line-count">Lines: 0</p>
@@ -105,6 +120,7 @@ const existing = entries.map((e) => ({
           <li><strong>Draw Lines</strong> — click two stars to connect them</li>
           <li><strong>Delete</strong> — click a star or line to remove it</li>
           <li><strong>World Position</strong> — click the mini-map to place your constellation in the sky</li>
+          <li><strong>Snap to Grid</strong> — stars snap to grid points when enabled</li>
           <li>The crosshair shows the center (0, 0)</li>
         </ul>
       </div>
@@ -307,6 +323,53 @@ const existing = entries.map((e) => ({
     background: rgba(201, 168, 76, 0.15);
     border-color: #c9a84c;
     color: #f5efe0;
+  }
+
+  .grid-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.72rem;
+    color: #c4b99a;
+    cursor: pointer;
+  }
+
+  .toggle-label input[type="checkbox"] {
+    accent-color: #c9a84c;
+  }
+
+  .grid-size-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .grid-size-label {
+    font-size: 0.62rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    opacity: 0.7;
+  }
+
+  .grid-size-row input[type="range"] {
+    flex: 1;
+    accent-color: #c9a84c;
+    height: 3px;
+  }
+
+  .grid-size-value {
+    font-size: 0.68rem;
+    color: #c4b99a;
+    min-width: 30px;
+    text-align: right;
   }
 
   .info {

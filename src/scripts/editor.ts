@@ -20,6 +20,34 @@ let history: { stars: [number, number][]; lines: [number, number][] }[] = [];
 let mouseX = 0;
 let mouseY = 0;
 
+// ── Grid / Snap ──
+let snapEnabled = true;
+let gridSize = 20;
+
+const snapToggle = document.getElementById('snap-toggle') as HTMLInputElement;
+const gridSizeInput = document.getElementById('grid-size') as HTMLInputElement;
+const gridSizeDisplay = document.getElementById('grid-size-display')!;
+
+snapToggle.addEventListener('change', () => {
+  snapEnabled = snapToggle.checked;
+  draw();
+});
+
+gridSizeInput.addEventListener('input', () => {
+  gridSize = parseInt(gridSizeInput.value, 10);
+  gridSizeDisplay.textContent = `${gridSize}px`;
+  draw();
+});
+
+// Snap a coordinate to the nearest grid point (relative to canvas center)
+function snapToGrid(x: number, y: number): [number, number] {
+  if (!snapEnabled) return [Math.round(x), Math.round(y)];
+  return [
+    Math.round(x / gridSize) * gridSize,
+    Math.round(y / gridSize) * gridSize,
+  ];
+}
+
 // ── DOM References ──
 const nameInput = document.getElementById('name') as HTMLInputElement;
 const subtitleInput = document.getElementById('subtitle') as HTMLInputElement;
@@ -108,7 +136,7 @@ function getCenter(): [number, number] {
 // Convert a screen pixel position to a star coordinate (offset from canvas center)
 function pixelToCoord(px: number, py: number): [number, number] {
   const [cx, cy] = getCenter();
-  return [Math.round(px - cx), Math.round(py - cy)];
+  return snapToGrid(px - cx, py - cy);
 }
 
 // Convert a star coordinate back to screen pixel position
@@ -472,6 +500,10 @@ document.querySelectorAll<HTMLButtonElement>('.load-btn').forEach((btn) => {
 // Redraw canvas and minimap when the color picker changes
 colorInput.addEventListener('input', () => { draw(); drawMinimap(); });
 
+// Redraw canvas when name/subtitle change (for the preview label)
+nameInput.addEventListener('input', () => draw());
+subtitleInput.addEventListener('input', () => draw());
+
 // ── Main Canvas Drawing ──
 // Renders the editor view: grid, constellation lines, pending line, stars with labels,
 // and coordinate display under the cursor in star mode
@@ -493,13 +525,31 @@ function draw() {
   ctx.lineTo(w, cy);
   ctx.stroke();
 
-  // Grid dots (subtle background pattern)
-  const gridSize = 20;
-  ctx.fillStyle = 'rgba(245, 239, 224, 0.03)';
+  // Grid dots
+  const dotAlpha = snapEnabled ? 0.1 : 0.03;
+  const dotSize = snapEnabled ? 1.5 : 1;
+  ctx.fillStyle = `rgba(245, 239, 224, ${dotAlpha})`;
   for (let x = cx % gridSize; x < w; x += gridSize) {
     for (let y = cy % gridSize; y < h; y += gridSize) {
-      ctx.fillRect(x - 0.5, y - 0.5, 1, 1);
+      ctx.beginPath();
+      ctx.arc(x, y, dotSize / 2, 0, Math.PI * 2);
+      ctx.fill();
     }
+  }
+
+  // Snap preview: show where the star would be placed
+  if (mode === 'star' && snapEnabled && mouseX > 0) {
+    const [snapX, snapY] = pixelToCoord(mouseX, mouseY);
+    const [spx, spy] = coordToPixel(snapX, snapY);
+    ctx.beginPath();
+    ctx.arc(spx, spy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(245, 239, 224, 0.15)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(spx, spy, 4, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(245, 239, 224, 0.25)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   }
 
   // Draw constellation lines
@@ -563,6 +613,47 @@ function draw() {
     ctx.fillStyle = 'rgba(245, 239, 224, 0.3)';
     ctx.font = '11px Quicksand, sans-serif';
     ctx.fillText(`${mx}, ${my}`, mouseX + 14, mouseY - 8);
+  }
+
+  // ── Title / Subtitle Preview ──
+  // Show the constellation name and subtitle above the stars, matching the map style
+  const name = nameInput.value;
+  const subtitle = subtitleInput.value;
+  if (name || subtitle) {
+    // Find the topmost star to position the label above it
+    let topY = cy; // default to center if no stars
+    if (stars.length > 0) {
+      let minStarY = Infinity;
+      for (const [, sy] of stars) {
+        if (sy < minStarY) minStarY = sy;
+      }
+      topY = cy + minStarY;
+    }
+
+    const labelY = topY - 40;
+    ctx.textAlign = 'center';
+
+    if (subtitle) {
+      ctx.fillStyle = hexToRgba(color, 0.45);
+      ctx.font = '300 10px Quicksand, sans-serif';
+      // Draw with manual letter spacing for broad browser support
+      const upper = subtitle.toUpperCase();
+      const spacing = 3;
+      const totalWidth = ctx.measureText(upper).width + spacing * (upper.length - 1);
+      let tx = cx - totalWidth / 2;
+      for (const ch of upper) {
+        ctx.fillText(ch, tx, labelY - 18);
+        tx += ctx.measureText(ch).width + spacing;
+      }
+    }
+
+    if (name) {
+      ctx.fillStyle = hexToRgba(color, 0.7);
+      ctx.font = '18px "Tan Mon Cheri", serif';
+      ctx.fillText(name, cx, labelY);
+    }
+
+    ctx.textAlign = 'start';
   }
 }
 
