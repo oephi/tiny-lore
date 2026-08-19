@@ -1,4 +1,5 @@
 import { hexToRgba, setupHiDpiCanvas, WORLD_SIZE, type Constellation } from './shared';
+import { navigate } from 'astro:transitions/client';
 
 // Load constellation data from the embedded JSON element
 const constellations: Constellation[] = JSON.parse(
@@ -566,14 +567,17 @@ function updateTransition() {
   // Navigate once overlay is opaque enough to hide the page swap
   if (transitionProgress > 0.7 && !navigated) {
     navigated = true;
-    window.location.href = `/constellations/${transitionTarget.id}`;
+    navigate(`/constellations/${transitionTarget.id}`);
   }
 }
 
 // ── Main Loop ──
 // Runs every frame via requestAnimationFrame. Handles camera smoothing, hover/reveal state,
 // intro animation, and renders all visual layers in order.
+let paused = false;
+
 function frame() {
+  if (paused) return; // Stop loop when canvas is stashed off-screen
   time += 0.012;
 
   if (transitioning) {
@@ -646,3 +650,23 @@ function frame() {
 }
 
 frame();
+
+// Expose controls for the stash/restore system in ConstellationCanvas.astro
+(window as any).__canvasPause = () => { paused = true; };
+(window as any).__canvasResume = () => {
+  if (paused) { paused = false; requestAnimationFrame(frame); }
+};
+(window as any).__canvasReset = () => {
+  transitioning = false;
+  transitionTarget = null;
+  transitionProgress = 0;
+  transitionFade = 0;
+  navigated = false;
+  if (fadeOverlay) { fadeOverlay.remove(); fadeOverlay = null; }
+  canvas.style.cursor = 'grab';
+  label.classList.add('hidden');
+  const h = document.getElementById('hint');
+  if (h) h.style.opacity = '1';
+  const brand = document.getElementById('brand');
+  if (brand) brand.style.opacity = '';
+};

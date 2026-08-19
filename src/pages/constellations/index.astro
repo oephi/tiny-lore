@@ -2,7 +2,6 @@
 import Layout from '../../layouts/Layout.astro';
 import ConstellationCanvas from '../../components/ConstellationCanvas.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
-import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection } from 'astro:content';
 
 // Build a lookup of all tracks across all constellations
@@ -57,11 +56,6 @@ const allTracks = entries.flatMap(entry =>
     </div>
   </div>
 
-  <!-- Fixed player bar above tab bar -->
-  <div class="fav-player-wrapper hidden" id="fav-player">
-    <AudioPlayer id="fav-player" />
-  </div>
-
   <!-- Bottom tab bar -->
   <nav class="tab-bar hidden" id="tab-bar">
     <button class="tab active" data-tab="universe" id="tab-universe">
@@ -81,373 +75,329 @@ const allTracks = entries.flatMap(entry =>
 </script>
 
 <script>
-  import { formatTime as fmt } from '../../scripts/format';
+  function initConstellationsIndex() {
+    const allTracks: any[] = (window as any).__allTracks;
+    const constellationMeta: Record<string, { stars: {x:number,y:number}[], lines: {from:number,to:number}[] }> = (window as any).__constellationMeta;
+    const ac = new AbortController();
 
-  const allTracks: any[] = (window as any).__allTracks;
-  const constellationMeta: Record<string, { stars: {x:number,y:number}[], lines: {from:number,to:number}[] }> = (window as any).__constellationMeta;
+    // Draw a mini constellation into a canvas element
+    function drawMiniConstellation(canvas: HTMLCanvasElement, constellationId: string, color: string) {
+      const meta = constellationMeta[constellationId];
+      if (!meta || !meta.stars.length) return;
 
-  // Draw a mini constellation into a canvas element
-  function drawMiniConstellation(canvas: HTMLCanvasElement, constellationId: string, color: string) {
-    const meta = constellationMeta[constellationId];
-    if (!meta || !meta.stars.length) return;
+      const dpr = window.devicePixelRatio || 1;
+      const size = 36;
+      canvas.width = size * dpr;
+      canvas.height = size * dpr;
+      canvas.style.width = size + 'px';
+      canvas.style.height = size + 'px';
 
-    const dpr = window.devicePixelRatio || 1;
-    const size = 36;
-    canvas.width = size * dpr;
-    canvas.height = size * dpr;
-    canvas.style.width = size + 'px';
-    canvas.style.height = size + 'px';
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(dpr, dpr);
 
-    const ctx = canvas.getContext('2d')!;
-    ctx.scale(dpr, dpr);
+      const stars = meta.stars;
+      const lines = meta.lines;
 
-    const stars = meta.stars;
-    const lines = meta.lines;
+      const xs = stars.map(s => s.x);
+      const ys = stars.map(s => s.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs);
+      const minY = Math.min(...ys), maxY = Math.max(...ys);
+      const rangeX = maxX - minX || 1;
+      const rangeY = maxY - minY || 1;
+      const pad = 6;
+      const scale = Math.min((size - pad * 2) / rangeX, (size - pad * 2) / rangeY);
+      const offX = (size - rangeX * scale) / 2;
+      const offY = (size - rangeY * scale) / 2;
 
-    // Find bounding box and fit into canvas with padding
-    const xs = stars.map(s => s.x);
-    const ys = stars.map(s => s.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs);
-    const minY = Math.min(...ys), maxY = Math.max(...ys);
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    const pad = 6;
-    const scale = Math.min((size - pad * 2) / rangeX, (size - pad * 2) / rangeY);
-    const offX = (size - rangeX * scale) / 2;
-    const offY = (size - rangeY * scale) / 2;
+      function tx(x: number) { return (x - minX) * scale + offX; }
+      function ty(y: number) { return (y - minY) * scale + offY; }
 
-    function tx(x: number) { return (x - minX) * scale + offX; }
-    function ty(y: number) { return (y - minY) * scale + offY; }
-
-    // Draw lines
-    ctx.strokeStyle = color;
-    ctx.globalAlpha = 0.35;
-    ctx.lineWidth = 1;
-    for (const line of lines) {
-      const a = stars[line.from];
-      const b = stars[line.to];
-      if (!a || !b) continue;
-      ctx.beginPath();
-      ctx.moveTo(tx(a.x), ty(a.y));
-      ctx.lineTo(tx(b.x), ty(b.y));
-      ctx.stroke();
-    }
-
-    // Draw stars
-    ctx.globalAlpha = 0.8;
-    ctx.fillStyle = color;
-    for (const star of stars) {
-      ctx.beginPath();
-      ctx.arc(tx(star.x), ty(star.y), 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Glow on stars
-    ctx.globalAlpha = 0.25;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 4;
-    for (const star of stars) {
-      ctx.beginPath();
-      ctx.arc(tx(star.x), ty(star.y), 2, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
-  const canvasApp = document.getElementById('constellation-app')!;
-  const favView = document.getElementById('favorites-view')!;
-  const favList = document.getElementById('favorites-list')!;
-  const favEmpty = document.getElementById('favorites-empty')!;
-  const tabUniverse = document.getElementById('tab-universe')!;
-  const tabFavorites = document.getElementById('tab-favorites')!;
-
-  // Player elements
-  const audio = new Audio();
-  const playerEl = document.getElementById('fav-player')!;
-  const playBtn = document.getElementById('fav-player-play')!;
-  const titleEl = document.getElementById('fav-player-title')!;
-  const fillEl = document.getElementById('fav-player-fill')!;
-  const barEl = document.getElementById('fav-player-bar')!;
-  const timeEl = document.getElementById('fav-player-time')!;
-
-  let currentTab = 'universe';
-  let favorites: string[] = [];
-  let loggedIn = false;
-  let currentTrackId = '';
-  let isPlaying = false;
-  // Flat list of rendered favorite tracks for next/prev
-  let renderedTracks: any[] = [];
-
-  // Fetch favorites from API
-  async function loadFavorites() {
-    try {
-      const res = await fetch('/api/user/favorites');
-      const data = await res.json();
-      loggedIn = data.loggedIn;
-      favorites = data.favorites || [];
-
-      if (loggedIn) {
-        document.getElementById('tab-bar')!.classList.remove('hidden');
+      ctx.strokeStyle = color;
+      ctx.globalAlpha = 0.35;
+      ctx.lineWidth = 1;
+      for (const line of lines) {
+        const a = stars[line.from];
+        const b = stars[line.to];
+        if (!a || !b) continue;
+        ctx.beginPath();
+        ctx.moveTo(tx(a.x), ty(a.y));
+        ctx.lineTo(tx(b.x), ty(b.y));
+        ctx.stroke();
       }
-    } catch { /* silently fail */ }
-  }
 
-  // Play a track by its data
-  function playTrack(track: any) {
-    currentTrackId = track.trackId;
-    audio.src = track.src;
-    audio.play();
-    isPlaying = true;
-
-    playerEl.classList.remove('hidden');
-    playerEl.style.setProperty('--accent', track.color);
-    titleEl.textContent = track.title;
-    playBtn.innerHTML = '&#9646;&#9646;';
-
-    // Update active states on track rows
-    favList.querySelectorAll('.track').forEach((el: Element) => {
-      const row = el as HTMLElement;
-      if (row.dataset.trackId === track.trackId) {
-        row.classList.add('active');
-        row.style.setProperty('--accent', track.color);
-      } else {
-        row.classList.remove('active');
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = color;
+      for (const star of stars) {
+        ctx.beginPath();
+        ctx.arc(tx(star.x), ty(star.y), 1.5, 0, Math.PI * 2);
+        ctx.fill();
       }
-    });
-  }
 
-  // Render the favorites list
-  function renderFavorites() {
-    favList.innerHTML = '';
-    renderedTracks = [];
-
-    const favTracks = allTracks.filter(t => favorites.includes(t.trackId));
-
-    if (favTracks.length === 0) {
-      favEmpty.classList.remove('hidden');
-      favList.classList.add('hidden');
-      playerEl.classList.add('hidden');
-      return;
+      ctx.globalAlpha = 0.25;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 4;
+      for (const star of stars) {
+        ctx.beginPath();
+        ctx.arc(tx(star.x), ty(star.y), 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
 
-    favEmpty.classList.add('hidden');
-    favList.classList.remove('hidden');
+    const canvasApp = document.getElementById('constellation-app')!;
+    const favView = document.getElementById('favorites-view')!;
+    const favList = document.getElementById('favorites-list')!;
+    const favEmpty = document.getElementById('favorites-empty')!;
+    const tabUniverse = document.getElementById('tab-universe')!;
+    const tabFavorites = document.getElementById('tab-favorites')!;
 
-    // Group by constellation
-    const grouped: Record<string, any[]> = {};
-    for (const t of favTracks) {
-      if (!grouped[t.constellationId]) grouped[t.constellationId] = [];
-      grouped[t.constellationId].push(t);
-    }
+    if (!favView || !favList) return;
 
-    let trackIndex = 0;
+    let currentTab = 'universe';
+    let favorites: string[] = [];
+    let loggedIn = false;
+    let currentTrackId = '';
+    let isPlaying = false;
+    let renderedTracks: any[] = [];
 
-    for (const [constellationId, tracks] of Object.entries(grouped)) {
-      const first = (tracks as any[])[0];
-      const group = document.createElement('div');
-      group.className = 'track-group';
-      group.style.setProperty('--accent', first.color);
+    async function loadFavorites() {
+      try {
+        const res = await fetch('/api/user/favorites');
+        const data = await res.json();
+        loggedIn = data.loggedIn;
+        favorites = data.favorites || [];
 
-      // Collapsible header with mini constellation
-      const header = document.createElement('button');
-      header.className = 'group-header';
-
-      const miniCanvas = document.createElement('canvas');
-      miniCanvas.className = 'group-constellation';
-      header.appendChild(miniCanvas);
-
-      const nameSpan = document.createElement('span');
-      nameSpan.className = 'group-name';
-      nameSpan.textContent = first.constellationName;
-      header.appendChild(nameSpan);
-
-      const countSpan = document.createElement('span');
-      countSpan.className = 'group-count';
-      countSpan.textContent = `${(tracks as any[]).length} track${(tracks as any[]).length > 1 ? 's' : ''}`;
-      header.appendChild(countSpan);
-
-      const chevron = document.createElement('span');
-      chevron.className = 'group-chevron';
-      chevron.innerHTML = '&#9662;';
-      header.appendChild(chevron);
-
-      group.appendChild(header);
-
-      // Draw the mini constellation after it's in the DOM
-      requestAnimationFrame(() => {
-        drawMiniConstellation(miniCanvas, constellationId, first.color);
-      });
-
-      const trackList = document.createElement('div');
-      trackList.className = 'track-list collapsed';
-      trackList.style.setProperty('--accent', first.color);
-
-      // Toggle collapse on header click
-      header.addEventListener('click', () => {
-        const isOpen = !trackList.classList.contains('collapsed');
-        if (isOpen) {
-          trackList.classList.add('collapsed');
-          header.classList.remove('open');
-        } else {
-          trackList.classList.remove('collapsed');
-          header.classList.add('open');
-          // After expand animation, scroll the group into view so it's not hidden behind the player
-          setTimeout(() => {
-            group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          }, 100);
+        if (loggedIn) {
+          document.getElementById('tab-bar')!.classList.remove('hidden');
         }
-      });
+      } catch { /* silently fail */ }
+    }
 
-      for (let i = 0; i < (tracks as any[]).length; i++) {
-        const track = (tracks as any[])[i];
-        renderedTracks.push(track);
+    function buildFavPlaylist() {
+      return renderedTracks.map(t => ({
+        src: t.src,
+        title: t.title,
+        trackId: t.trackId,
+        color: t.color,
+      }));
+    }
 
-        const row = document.createElement('div');
-        row.className = 'track';
-        row.dataset.trackId = track.trackId;
-        row.style.setProperty('--accent', track.color);
+    function playTrack(track: any) {
+      currentTrackId = track.trackId;
+      isPlaying = true;
 
-        if (track.trackId === currentTrackId && isPlaying) {
+      window.dispatchEvent(new CustomEvent('audio-play', {
+        detail: {
+          src: track.src,
+          title: track.title,
+          trackId: track.trackId,
+          color: track.color,
+          playlist: buildFavPlaylist(),
+        },
+      }));
+
+      // Update active states on track rows
+      favList.querySelectorAll('.track').forEach((el: Element) => {
+        const row = el as HTMLElement;
+        if (row.dataset.trackId === track.trackId) {
           row.classList.add('active');
-          // Auto-open the group containing the playing track
-          trackList.classList.remove('collapsed');
-          header.classList.add('open');
+          row.style.setProperty('--accent', track.color);
+        } else {
+          row.classList.remove('active');
         }
+      });
+    }
 
-        row.innerHTML = `
-          <span class="track-number">${String(i + 1).padStart(2, '0')}</span>
-          <span class="track-info">
-            <span class="track-title">${track.title}</span>
-            <span class="track-duration">${track.duration}</span>
-          </span>
-          <span class="track-play-icon">&#9654;</span>
-          <button class="fav-btn favorited" data-track-id="${track.trackId}" aria-label="Remove favorite">
-            <svg viewBox="0 0 24 24" class="heart-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-          </button>
-        `;
+    function renderFavorites() {
+      favList.innerHTML = '';
+      renderedTracks = [];
 
-        // Track click — play/pause
-        row.addEventListener('click', (e) => {
-          if ((e.target as HTMLElement).closest('.fav-btn')) return;
-          if (track.trackId === currentTrackId && isPlaying) {
-            audio.pause();
-            isPlaying = false;
-            playBtn.innerHTML = '&#9654;';
-            row.classList.remove('active');
+      const favTracks = allTracks.filter(t => favorites.includes(t.trackId));
+
+      if (favTracks.length === 0) {
+        favEmpty.classList.remove('hidden');
+        favList.classList.add('hidden');
+        return;
+      }
+
+      favEmpty.classList.add('hidden');
+      favList.classList.remove('hidden');
+
+      // Group by constellation
+      const grouped: Record<string, any[]> = {};
+      for (const t of favTracks) {
+        if (!grouped[t.constellationId]) grouped[t.constellationId] = [];
+        grouped[t.constellationId].push(t);
+      }
+
+      for (const [constellationId, tracks] of Object.entries(grouped)) {
+        const first = (tracks as any[])[0];
+        const group = document.createElement('div');
+        group.className = 'track-group';
+        group.style.setProperty('--accent', first.color);
+
+        const header = document.createElement('button');
+        header.className = 'group-header';
+
+        const miniCanvas = document.createElement('canvas');
+        miniCanvas.className = 'group-constellation';
+        header.appendChild(miniCanvas);
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'group-name';
+        nameSpan.textContent = first.constellationName;
+        header.appendChild(nameSpan);
+
+        const countSpan = document.createElement('span');
+        countSpan.className = 'group-count';
+        countSpan.textContent = `${(tracks as any[]).length} track${(tracks as any[]).length > 1 ? 's' : ''}`;
+        header.appendChild(countSpan);
+
+        const chevron = document.createElement('span');
+        chevron.className = 'group-chevron';
+        chevron.innerHTML = '&#9662;';
+        header.appendChild(chevron);
+
+        group.appendChild(header);
+
+        requestAnimationFrame(() => {
+          drawMiniConstellation(miniCanvas, constellationId, first.color);
+        });
+
+        const trackList = document.createElement('div');
+        trackList.className = 'track-list collapsed';
+        trackList.style.setProperty('--accent', first.color);
+
+        header.addEventListener('click', () => {
+          const isOpen = !trackList.classList.contains('collapsed');
+          if (isOpen) {
+            trackList.classList.add('collapsed');
+            header.classList.remove('open');
           } else {
-            playTrack(track);
+            trackList.classList.remove('collapsed');
+            header.classList.add('open');
+            setTimeout(() => {
+              group.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }, 100);
           }
         });
 
-        // Unfavorite handler
-        row.querySelector('.fav-btn')!.addEventListener('click', async (e) => {
-          e.stopPropagation();
-          try {
-            const res = await fetch('/api/user/favorites', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ trackId: track.trackId }),
-            });
-            const data = await res.json();
-            if (!data.favorited) {
-              favorites = favorites.filter(f => f !== track.trackId);
-              renderFavorites();
+        for (let i = 0; i < (tracks as any[]).length; i++) {
+          const track = (tracks as any[])[i];
+          renderedTracks.push(track);
+
+          const row = document.createElement('div');
+          row.className = 'track';
+          row.dataset.trackId = track.trackId;
+          row.style.setProperty('--accent', track.color);
+
+          if (track.trackId === currentTrackId && isPlaying) {
+            row.classList.add('active');
+            trackList.classList.remove('collapsed');
+            header.classList.add('open');
+          }
+
+          row.innerHTML = `
+            <span class="track-number">${String(i + 1).padStart(2, '0')}</span>
+            <span class="track-info">
+              <span class="track-title">${track.title}</span>
+              <span class="track-duration">${track.duration}</span>
+            </span>
+            <span class="track-play-icon">&#9654;</span>
+            <button class="fav-btn favorited" data-track-id="${track.trackId}" aria-label="Remove favorite">
+              <svg viewBox="0 0 24 24" class="heart-icon"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            </button>
+          `;
+
+          row.addEventListener('click', (e) => {
+            if ((e.target as HTMLElement).closest('.fav-btn')) return;
+            if (track.trackId === currentTrackId && isPlaying) {
+              window.dispatchEvent(new Event('audio-pause'));
+              isPlaying = false;
+              row.classList.remove('active');
+            } else {
+              playTrack(track);
             }
-          } catch { /* silently fail */ }
-        });
+          });
 
-        trackList.appendChild(row);
+          row.querySelector('.fav-btn')!.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+              const res = await fetch('/api/user/favorites', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ trackId: track.trackId }),
+              });
+              const data = await res.json();
+              if (!data.favorited) {
+                favorites = favorites.filter(f => f !== track.trackId);
+                renderFavorites();
+              }
+            } catch { /* silently fail */ }
+          });
+
+          trackList.appendChild(row);
+        }
+
+        group.appendChild(trackList);
+        favList.appendChild(group);
       }
-
-      group.appendChild(trackList);
-      favList.appendChild(group);
     }
-  }
 
-  // Player controls
-  playBtn.addEventListener('click', () => {
-    if (isPlaying) {
-      audio.pause();
-      isPlaying = false;
-      playBtn.innerHTML = '&#9654;';
-      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.remove('active');
-    } else {
-      audio.play();
+    // Listen for audio state changes from the global player
+    window.addEventListener('audio-state', ((e: CustomEvent) => {
+      const { playing, trackId } = e.detail;
+      isPlaying = playing;
+      currentTrackId = trackId;
+      favList.querySelectorAll('.track').forEach((el: Element) => {
+        const row = el as HTMLElement;
+        if (row.dataset.trackId === trackId && playing) {
+          row.classList.add('active');
+        } else {
+          row.classList.remove('active');
+        }
+      });
+    }) as EventListener, { signal: ac.signal });
+
+    // Check if something is already playing
+    const state = (window as any).__audioState?.();
+    if (state?.playing) {
+      currentTrackId = state.trackId;
       isPlaying = true;
-      playBtn.innerHTML = '&#9646;&#9646;';
-      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.add('active');
     }
-  });
 
-  audio.addEventListener('timeupdate', () => {
-    if (!audio.duration) return;
-    const pct = (audio.currentTime / audio.duration) * 100;
-    fillEl.style.width = pct + '%';
-    timeEl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
-  });
+    // Tab switching
+    function switchTab(tab: string) {
+      currentTab = tab;
 
-  barEl.addEventListener('click', (e) => {
-    const rect = barEl.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    audio.currentTime = pct * audio.duration;
-  });
+      const headerLeft = document.querySelector('.header-left') as HTMLElement;
 
-  // Auto-play next track
-  audio.addEventListener('ended', () => {
-    const curIdx = renderedTracks.findIndex(t => t.trackId === currentTrackId);
-    if (curIdx >= 0 && curIdx + 1 < renderedTracks.length) {
-      playTrack(renderedTracks[curIdx + 1]);
-    } else {
-      isPlaying = false;
-      playBtn.innerHTML = '&#9654;';
-      favList.querySelector(`.track[data-track-id="${currentTrackId}"]`)?.classList.remove('active');
-    }
-  });
-
-  // Close player
-  document.getElementById('fav-player-close')?.addEventListener('click', () => {
-    audio.pause();
-    audio.src = '';
-    isPlaying = false;
-    currentTrackId = '';
-    playBtn.innerHTML = '&#9654;';
-    playerEl.classList.add('hidden');
-    favList.querySelectorAll('.track').forEach(t => t.classList.remove('active'));
-  });
-
-  // Tab switching
-  function switchTab(tab: string) {
-    currentTab = tab;
-
-    const headerLeft = document.querySelector('.header-left') as HTMLElement;
-
-    if (tab === 'universe') {
-      canvasApp.style.display = '';
-      favView.classList.add('hidden');
-      tabUniverse.classList.add('active');
-      tabFavorites.classList.remove('active');
-      if (headerLeft) headerLeft.classList.remove('hide-mobile');
-      // Stop audio when leaving favorites
-      if (isPlaying) {
-        audio.pause();
-        isPlaying = false;
+      if (tab === 'universe') {
+        canvasApp.style.display = '';
+        favView.classList.add('hidden');
+        tabUniverse.classList.add('active');
+        tabFavorites.classList.remove('active');
+        if (headerLeft) headerLeft.classList.remove('hide-mobile');
+      } else {
+        canvasApp.style.display = 'none';
+        favView.classList.remove('hidden');
+        tabUniverse.classList.remove('active');
+        tabFavorites.classList.add('active');
+        if (headerLeft) headerLeft.classList.add('hide-mobile');
+        loadFavorites().then(() => renderFavorites());
       }
-      playerEl.classList.add('hidden');
-    } else {
-      canvasApp.style.display = 'none';
-      favView.classList.remove('hidden');
-      tabUniverse.classList.remove('active');
-      tabFavorites.classList.add('active');
-      if (headerLeft) headerLeft.classList.add('hide-mobile');
-      loadFavorites().then(() => renderFavorites());
     }
+
+    tabUniverse.addEventListener('click', () => switchTab('universe'));
+    tabFavorites.addEventListener('click', () => switchTab('favorites'));
+
+    loadFavorites();
+    window.addEventListener('auth-changed', () => loadFavorites(), { signal: ac.signal });
+
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
   }
 
-  tabUniverse.addEventListener('click', () => switchTab('universe'));
-  tabFavorites.addEventListener('click', () => switchTab('favorites'));
-
-  // Load favorites on page load and after login
-  loadFavorites();
-  window.addEventListener('auth-changed', () => loadFavorites());
+  initConstellationsIndex();
+  document.addEventListener('astro:after-swap', () => initConstellationsIndex());
 </script>
 
 <style>
@@ -840,25 +790,6 @@ const allTracks = entries.flatMap(entry =>
 
   :global(.fav-btn.favorited:hover .heart-icon) {
     fill: #d43a5d;
-  }
-
-  /* ── Player Bar ── */
-  :global(.fav-player-wrapper) {
-    position: fixed;
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
-    left: 0;
-    right: 0;
-    z-index: 99;
-    padding: 0 1rem;
-    max-width: 480px;
-    margin: 0 auto;
-    transition: opacity 0.3s, transform 0.3s;
-  }
-
-  :global(.fav-player-wrapper.hidden) {
-    opacity: 0;
-    transform: translateY(10px);
-    pointer-events: none;
   }
 
 </style>

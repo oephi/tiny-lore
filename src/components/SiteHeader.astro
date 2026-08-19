@@ -49,83 +49,93 @@ const {
 </aside>
 
 <script>
-  // ── Auth ──
-  let isLoggedIn = false;
+  function initSiteHeader() {
+    const ac = new AbortController();
 
-  async function checkAuth() {
-    try {
-      const res = await fetch('/api/user/favorites');
-      const data = await res.json();
-      isLoggedIn = !!data.loggedIn;
-      updateAuthUI();
-    } catch { /* silently fail */ }
-  }
+    // ── Auth ──
+    let isLoggedIn = false;
 
-  function updateAuthUI() {
-    const signIn = document.getElementById('panel-sign-in')!;
-    const signOut = document.getElementById('panel-sign-out')!;
-    if (isLoggedIn) {
-      signIn.classList.add('hidden');
-      signOut.classList.remove('hidden');
-    } else {
-      signIn.classList.remove('hidden');
-      signOut.classList.add('hidden');
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/user/favorites');
+        const data = await res.json();
+        isLoggedIn = !!data.loggedIn;
+        updateAuthUI();
+      } catch { /* silently fail */ }
     }
-  }
 
-  checkAuth();
-
-  // ── Sign in via popup ──
-  document.getElementById('panel-sign-in')?.addEventListener('click', () => {
-    const w = 480, h = 600;
-    const left = (screen.width - w) / 2;
-    const top = (screen.height - h) / 2;
-    const popup = window.open(
-      '/api/user/login',
-      'tiny-lore-login',
-      `width=${w},height=${h},left=${left},top=${top},popup=yes`
-    );
-
-    const timer = setInterval(() => {
-      if (!popup || popup.closed) {
-        clearInterval(timer);
-        checkAuth();
-        window.dispatchEvent(new Event('auth-changed'));
+    function updateAuthUI() {
+      const signIn = document.getElementById('panel-sign-in');
+      const signOut = document.getElementById('panel-sign-out');
+      if (!signIn || !signOut) return;
+      if (isLoggedIn) {
+        signIn.classList.add('hidden');
+        signOut.classList.remove('hidden');
+      } else {
+        signIn.classList.remove('hidden');
+        signOut.classList.add('hidden');
       }
-    }, 300);
-
-    closePanel();
-  });
-
-  // ── Sign out ──
-  document.getElementById('panel-sign-out')?.addEventListener('click', () => {
-    window.location.href = '/api/user/logout';
-  });
-
-  // ── Panel open/close ──
-  const panel = document.getElementById('side-panel')!;
-  const backdrop = document.getElementById('panel-backdrop')!;
-
-  function openPanel() {
-    panel.classList.add('open');
-    backdrop.classList.add('open');
-  }
-
-  function closePanel() {
-    panel.classList.remove('open');
-    backdrop.classList.remove('open');
-  }
-
-  document.getElementById('menu-trigger')?.addEventListener('click', openPanel);
-  document.getElementById('panel-close')?.addEventListener('click', closePanel);
-  backdrop.addEventListener('click', closePanel);
-
-  // Close on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && panel.classList.contains('open')) {
-      closePanel();
     }
-  });
+
+    checkAuth();
+
+    // ── Sign in via popup ──
+    document.getElementById('panel-sign-in')?.addEventListener('click', () => {
+      const w = 480, h = 600;
+      const left = (screen.width - w) / 2;
+      const top = (screen.height - h) / 2;
+      const popup = window.open(
+        '/api/user/login',
+        'tiny-lore-login',
+        `width=${w},height=${h},left=${left},top=${top},popup=yes`
+      );
+
+      const timer = setInterval(() => {
+        if (!popup || popup.closed) {
+          clearInterval(timer);
+          checkAuth();
+          window.dispatchEvent(new Event('auth-changed'));
+        }
+      }, 300);
+
+      closePanel();
+    });
+
+    // ── Sign out ──
+    document.getElementById('panel-sign-out')?.addEventListener('click', () => {
+      window.location.href = '/api/user/logout';
+    });
+
+    // ── Panel open/close ──
+    const panel = document.getElementById('side-panel')!;
+    const backdrop = document.getElementById('panel-backdrop')!;
+
+    function openPanel() {
+      panel.classList.add('open');
+      backdrop.classList.add('open');
+    }
+
+    function closePanel() {
+      panel.classList.remove('open');
+      backdrop.classList.remove('open');
+    }
+
+    document.getElementById('menu-trigger')?.addEventListener('click', openPanel);
+    document.getElementById('panel-close')?.addEventListener('click', closePanel);
+    backdrop.addEventListener('click', closePanel);
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && panel.classList.contains('open')) {
+        closePanel();
+      }
+    }, { signal: ac.signal });
+
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+  }
+
+  initSiteHeader();
+  document.addEventListener('astro:after-swap', () => initSiteHeader());
 </script>
 
 <style>

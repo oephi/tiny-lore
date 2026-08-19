@@ -137,4 +137,36 @@ const constellationData = entries.filter((e) => !e.data.hidden).map((entry) => (
 
 <script>
   import '../scripts/constellation-canvas';
+
+  // Stash/restore the canvas element across View Transitions so the
+  // animation loop, event listeners, and camera state all survive navigation.
+  const W = window as any;
+
+  document.addEventListener('astro:before-swap', () => {
+    const app = document.getElementById('constellation-app');
+    if (app) {
+      app.remove();
+      W.__stashedCanvas = app;
+      W.__canvasPause?.();
+    }
+  });
+
+  document.addEventListener('astro:after-swap', () => {
+    const stashed = W.__stashedCanvas;
+    if (!stashed) return;
+
+    const placeholder = document.getElementById('constellation-app');
+    if (placeholder) {
+      // Back on the canvas page — swap in the real canvas
+      stashed.style.display = '';
+      placeholder.replaceWith(stashed);
+      W.__stashedCanvas = null;
+      W.__canvasReset?.();
+      W.__canvasResume?.();
+    } else {
+      // On a different page — keep stashed canvas hidden in body
+      stashed.style.display = 'none';
+      document.body.appendChild(stashed);
+    }
+  });
 </script>
