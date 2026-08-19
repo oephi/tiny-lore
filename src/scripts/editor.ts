@@ -326,7 +326,7 @@ function showFeedback(message: string, isError = false) {
   saveFeedback.textContent = message;
   saveFeedback.classList.toggle('error', isError);
   saveFeedback.classList.remove('hidden');
-  setTimeout(() => saveFeedback.classList.add('hidden'), 3000);
+  setTimeout(() => saveFeedback.classList.add('hidden'), isError ? 8000 : 3000);
 }
 
 // ── Save Button ──

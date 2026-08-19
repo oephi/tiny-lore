@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { load as yamlLoad } from 'js-yaml';
 import { requireEditorAuth } from '../../lib/auth';
 import { GITHUB_REPO, GITHUB_BRANCH } from '../../lib/github';
 
@@ -122,6 +123,21 @@ export const POST: APIRoute = async ({ request }) => {
 
   const slug = filename.replace(/[^a-z0-9-]/gi, '-').toLowerCase();
   const md = buildMarkdown(data);
+
+  // Validate the generated YAML frontmatter before saving
+  const frontmatterMatch = md.match(/^---\n([\s\S]*?)\n---/);
+  if (frontmatterMatch) {
+    try {
+      yamlLoad(frontmatterMatch[1]);
+    } catch (yamlErr: any) {
+      return new Response(JSON.stringify({
+        error: `Invalid frontmatter: ${yamlErr.message || yamlErr}`,
+      }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  }
 
   try {
     if (isProd) {

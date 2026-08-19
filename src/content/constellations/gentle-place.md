@@ -2,32 +2,32 @@
 name: The Gentle Place
 subtitle: Holder of the Infinite
 color: "#ee5de9"
-quote: ""In tiny lore, there is a world that has no walls. ..""
+quote: "In tiny lore, there is a world that has no walls..."
 center:
   x: 400
   y: -600
 stars:
   - x: -120
-    y: -80
+    y: -20
   - x: -60
-    y: -40
+    y: 20
   - x: 0
-    y: -80
+    y: -20
   - x: 60
-    y: -40
+    y: 20
   - x: 120
-    y: -80
+    y: -20
 lines:
-  - from: 0
-    to: 1
   - from: 0
     to: 2
   - from: 2
     to: 3
   - from: 3
     to: 4
+  - from: 4
+    to: 1
   - from: 1
-    to: 4
+    to: 0
 tracks: []
 ---
 
@@ -63,4 +63,4 @@ In this world, there is no line telling you where you end and everything else be
 
 Only softness remains as you float, held like a giant cloud in the space. 
 
-We call this world: The Gentle Place. 
+We call this world: The Gentle Place.
