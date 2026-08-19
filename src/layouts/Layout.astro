@@ -1,4 +1,7 @@
 ---
+import { ClientRouter } from 'astro:transitions';
+import AudioPlayer from '../components/AudioPlayer.astro';
+
 interface Props {
   title?: string;
   description?: string;
@@ -32,6 +35,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://tiny-lor
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <ClientRouter />
   <style is:global>
     @font-face {
       font-family: 'Tan Mon Cheri';
@@ -62,9 +66,45 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://tiny-lor
       font-family: 'Quicksand', sans-serif;
       font-size: 87.5%; /* Quicksand has a larger x-height than Lato — scale down to match */
     }
+
+    /* Disable default ClientRouter crossfade — pages handle their own transitions */
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation: none;
+      mix-blend-mode: normal;
+    }
+
+    /* ── Global Player ── */
+    .global-player {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 0 1rem;
+      max-width: 480px;
+      margin: 0 auto;
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .global-player.hidden {
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <slot />
+
+  <div class="global-player hidden" id="global-player" transition:persist="global-player">
+    <AudioPlayer id="gp" />
+  </div>
+
+  <script>
+    import { initGlobalPlayer } from '../scripts/audio-player';
+    initGlobalPlayer();
+    document.addEventListener('astro:after-swap', () => initGlobalPlayer());
+  </script>
 </body>
 </html>

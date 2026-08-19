@@ -1,7 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SiteHeader from '../../components/SiteHeader.astro';
-import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -73,11 +72,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
         </div>
       )}
 
-      <!-- Sticky player bar — hidden until a track is selected -->
-      <div class="player hidden" id="player" style={`--accent: ${color};`}>
-        <AudioPlayer id="player" />
-      </div>
-
       <div class="story-body">
         <Content />
       </div>
@@ -90,190 +84,155 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 </Layout>
 
 <script>
-  import { formatTime as fmt } from '../../scripts/format';
+  function initStoryPage() {
+    const tracks = document.querySelectorAll<HTMLDivElement>('.track');
+    if (!tracks.length) return;
 
-  const audio = new Audio();
-  const player = document.getElementById('player')!;
-  const playBtn = document.getElementById('player-play')!;
-  const titleEl = document.getElementById('player-title')!;
-  const fillEl = document.getElementById('player-fill')!;
-  const barEl = document.getElementById('player-bar')!;
-  const timeEl = document.getElementById('player-time')!;
-  const tracks = document.querySelectorAll<HTMLDivElement>('.track');
+    let currentIndex = -1;
+    let isPlaying = false;
+    let loggedIn = false;
+    let userFavorites: Set<string> = new Set();
+    const ac = new AbortController();
 
-  let currentIndex = -1;
-  let isPlaying = false;
-  let loggedIn = false;
-  let userFavorites: Set<string> = new Set();
+    async function loadFavorites() {
+      try {
+        const res = await fetch('/api/user/favorites');
+        const data = await res.json();
+        loggedIn = data.loggedIn;
+        userFavorites = new Set(data.favorites);
 
-  // Fetch user favorites and auth state on load
-  async function loadFavorites() {
-    try {
-      const res = await fetch('/api/user/favorites');
-      const data = await res.json();
-      loggedIn = data.loggedIn;
-      userFavorites = new Set(data.favorites);
-
-      document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
-        if (loggedIn) {
-          btn.classList.add('enabled');
-          if (userFavorites.has(btn.dataset.trackId!)) {
-            btn.classList.add('favorited');
+        document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
+          if (loggedIn) {
+            btn.classList.add('enabled');
+            if (userFavorites.has(btn.dataset.trackId!)) {
+              btn.classList.add('favorited');
+            }
+          } else {
+            btn.classList.add('disabled');
+            if (!btn.querySelector('.fav-tooltip')) {
+              const tip = document.createElement('span');
+              tip.className = 'fav-tooltip';
+              tip.textContent = 'Sign in to save favourites';
+              btn.appendChild(tip);
+            }
           }
-        } else {
-          btn.classList.add('disabled');
-          // Add custom tooltip
-          const tip = document.createElement('span');
-          tip.className = 'fav-tooltip';
-          tip.textContent = 'Sign in to save favourites';
-          btn.appendChild(tip);
+        });
+      } catch { /* silently fail */ }
+    }
+
+    loadFavorites();
+    window.addEventListener('auth-changed', () => loadFavorites(), { signal: ac.signal });
+
+    document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loggedIn) return;
+
+        const trackId = btn.dataset.trackId!;
+        btn.classList.toggle('favorited');
+
+        try {
+          const res = await fetch('/api/user/favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ trackId }),
+          });
+          const data = await res.json();
+          if (data.favorited) {
+            userFavorites.add(trackId);
+            btn.classList.add('favorited');
+          } else {
+            userFavorites.delete(trackId);
+            btn.classList.remove('favorited');
+          }
+        } catch {
+          btn.classList.toggle('favorited');
         }
       });
-    } catch { /* silently fail */ }
-  }
-
-  loadFavorites();
-  window.addEventListener('auth-changed', () => loadFavorites());
-
-  // Handle favorite button clicks
-  document.querySelectorAll<HTMLButtonElement>('.fav-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      if (!loggedIn) {
-        return;
-      }
-
-      const trackId = btn.dataset.trackId!;
-      btn.classList.toggle('favorited');
-
-      try {
-        const res = await fetch('/api/user/favorites', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ trackId }),
-        });
-        const data = await res.json();
-        if (data.favorited) {
-          userFavorites.add(trackId);
-          btn.classList.add('favorited');
-        } else {
-          userFavorites.delete(trackId);
-          btn.classList.remove('favorited');
-        }
-      } catch {
-        // Revert on error
-        btn.classList.toggle('favorited');
-      }
     });
-  });
 
-  // Select and play a track by index
-  function playTrack(index: number) {
-    const btn = tracks[index];
-    if (!btn) return;
+    function buildPlaylist() {
+      return Array.from(tracks).map(t => ({
+        src: t.dataset.src!,
+        title: t.dataset.title!,
+        trackId: t.dataset.src!,
+        color: getComputedStyle(t).getPropertyValue('--accent').trim() || '#c9a84c',
+      }));
+    }
 
-    // Update active track styling
-    tracks.forEach(t => t.classList.remove('active'));
-    btn.classList.add('active');
+    function playTrack(index: number) {
+      const btn = tracks[index];
+      if (!btn) return;
 
-    // Load and play
-    const src = btn.dataset.src!;
-    const title = btn.dataset.title!;
-    currentIndex = index;
-    audio.src = src;
-    audio.play();
-    isPlaying = true;
-
-    // Show player
-    player.classList.remove('hidden');
-    titleEl.textContent = title;
-    playBtn.innerHTML = '&#9646;&#9646;';
-  }
-
-  // Track click handlers
-  tracks.forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      // Ignore clicks on the favorite button
-      if ((e.target as HTMLElement).closest('.fav-btn')) return;
-      const index = Number(btn.dataset.index);
-      if (index === currentIndex && isPlaying) {
-        // Clicking active track pauses it
-        audio.pause();
-        isPlaying = false;
-        playBtn.innerHTML = '&#9654;';
-        btn.classList.remove('active');
-      } else {
-        playTrack(index);
-      }
-    });
-  });
-
-  // Play/pause button in the player bar
-  playBtn.addEventListener('click', () => {
-    if (isPlaying) {
-      audio.pause();
-      isPlaying = false;
-      playBtn.innerHTML = '&#9654;';
-      tracks[currentIndex]?.classList.remove('active');
-    } else {
-      audio.play();
+      tracks.forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      currentIndex = index;
       isPlaying = true;
-      playBtn.innerHTML = '&#9646;&#9646;';
-      tracks[currentIndex]?.classList.add('active');
+
+      window.dispatchEvent(new CustomEvent('audio-play', {
+        detail: {
+          src: btn.dataset.src!,
+          title: btn.dataset.title!,
+          trackId: btn.dataset.src!,
+          color: getComputedStyle(btn).getPropertyValue('--accent').trim() || '#c9a84c',
+          playlist: buildPlaylist(),
+        },
+      }));
     }
-  });
 
-  // Progress bar updates
-  audio.addEventListener('timeupdate', () => {
-    if (!audio.duration) return;
-    const pct = (audio.currentTime / audio.duration) * 100;
-    fillEl.style.width = pct + '%';
-    timeEl.textContent = `${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;
-  });
-
-  // Click to seek on the progress bar
-  barEl.addEventListener('click', (e) => {
-    const rect = barEl.getBoundingClientRect();
-    const pct = (e.clientX - rect.left) / rect.width;
-    audio.currentTime = pct * audio.duration;
-  });
-
-  // Auto-play next track when current one ends
-  audio.addEventListener('ended', () => {
-    const next = currentIndex + 1;
-    if (next < tracks.length) {
-      playTrack(next);
-    } else {
-      isPlaying = false;
-      playBtn.innerHTML = '&#9654;';
-      tracks[currentIndex]?.classList.remove('active');
-    }
-  });
-
-  // Close player
-  document.getElementById('player-close')?.addEventListener('click', () => {
-    audio.pause();
-    audio.src = '';
-    isPlaying = false;
-    currentIndex = -1;
-    playBtn.innerHTML = '&#9654;';
-    player.classList.add('hidden');
-    tracks.forEach(t => t.classList.remove('active'));
-  });
-
-  // Intercept back links — use browser back to get the nice pageshow restore
-  document.querySelectorAll<HTMLAnchorElement>('a[href="/constellations"]').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (isPlaying) {
-        audio.pause();
-        isPlaying = false;
-      }
-      history.back();
+    tracks.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('.fav-btn')) return;
+        const index = Number(btn.dataset.index);
+        if (index === currentIndex && isPlaying) {
+          window.dispatchEvent(new Event('audio-pause'));
+          isPlaying = false;
+          btn.classList.remove('active');
+        } else {
+          playTrack(index);
+        }
+      });
     });
-  });
+
+    window.addEventListener('audio-state', ((e: CustomEvent) => {
+      const { playing, trackId } = e.detail;
+      isPlaying = playing;
+      tracks.forEach((t, i) => {
+        if (t.dataset.src === trackId && playing) {
+          t.classList.add('active');
+          currentIndex = i;
+        } else {
+          t.classList.remove('active');
+        }
+      });
+    }) as EventListener, { signal: ac.signal });
+
+    // Check if something is already playing when the page loads
+    const state = (window as any).__audioState?.();
+    if (state?.playing) {
+      tracks.forEach((t, i) => {
+        if (t.dataset.src === state.trackId) {
+          t.classList.add('active');
+          currentIndex = i;
+          isPlaying = true;
+        }
+      });
+    }
+
+    // Intercept back links — use browser back for the zoom-out effect
+    document.querySelectorAll<HTMLAnchorElement>('a[href="/constellations"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        history.back();
+      });
+    });
+
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+  }
+
+  initStoryPage();
+  document.addEventListener('astro:after-swap', () => initStoryPage());
 </script>
 
 <style>
@@ -537,25 +496,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
   .fav-btn.favorited:hover .heart-icon {
     fill: #d43a5d;
   }
-
-  /* ── Player Bar ── */
-  .player {
-    position: sticky;
-    bottom: 1rem;
-    z-index: 30;
-    margin: 1.5rem -0.5rem 2rem;
-    transition: opacity 0.3s, transform 0.3s;
-  }
-
-  .player.hidden {
-    opacity: 0;
-    transform: translateY(10px);
-    pointer-events: none;
-    margin: 0 -0.5rem;
-    height: 0;
-    overflow: hidden;
-  }
-
 
   /* ── Story Body ── */
   .story-body {
