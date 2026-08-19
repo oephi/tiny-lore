@@ -25,48 +25,58 @@ const {
   </div>
 
   <div class="header-right">
-    <button class="sign-in-link" id="sign-in-link">Sign in</button>
-    <button class="user-menu hidden" id="user-menu">
-      <span class="user-initial" id="user-initial"></span>
+    <button class="menu-trigger" id="menu-trigger" aria-label="Open menu">
+      <span class="menu-dot">&#9679;</span>
     </button>
   </div>
 </header>
 
-<!-- Logout confirmation modal -->
-<div class="logout-modal hidden" id="logout-modal">
-  <div class="logout-backdrop" id="logout-backdrop"></div>
-  <div class="logout-dialog">
-    <div class="logout-ornament">&#10022;</div>
-    <p class="logout-text">Are you sure you want to sign out?</p>
-    <div class="logout-actions">
-      <button class="logout-btn logout-cancel" id="logout-cancel">Cancel</button>
-      <button class="logout-btn logout-confirm" id="logout-confirm">Sign out</button>
+<!-- Side panel -->
+<div class="panel-backdrop" id="panel-backdrop"></div>
+<aside class="side-panel" id="side-panel">
+  <button class="panel-close" id="panel-close" aria-label="Close menu">&times;</button>
+
+  <nav class="panel-nav">
+    <a href="/about" class="panel-link">About Us</a>
+
+    <div class="panel-divider">&#10022;</div>
+
+    <div class="panel-section panel-auth">
+      <button class="panel-sign-in" id="panel-sign-in">Sign in</button>
+      <button class="panel-sign-out hidden" id="panel-sign-out">Sign out</button>
     </div>
-  </div>
-</div>
+  </nav>
+</aside>
 
 <script>
-  // Check auth state and toggle sign-in / user icon
+  // ── Auth ──
+  let isLoggedIn = false;
+
   async function checkAuth() {
     try {
       const res = await fetch('/api/user/favorites');
       const data = await res.json();
-      const signIn = document.getElementById('sign-in-link')!;
-      const userMenu = document.getElementById('user-menu')!;
-      const userInitial = document.getElementById('user-initial')!;
-
-      if (data.loggedIn) {
-        signIn.classList.add('hidden');
-        userMenu.classList.remove('hidden');
-        userInitial.textContent = '\u25CF';
-      }
+      isLoggedIn = !!data.loggedIn;
+      updateAuthUI();
     } catch { /* silently fail */ }
+  }
+
+  function updateAuthUI() {
+    const signIn = document.getElementById('panel-sign-in')!;
+    const signOut = document.getElementById('panel-sign-out')!;
+    if (isLoggedIn) {
+      signIn.classList.add('hidden');
+      signOut.classList.remove('hidden');
+    } else {
+      signIn.classList.remove('hidden');
+      signOut.classList.add('hidden');
+    }
   }
 
   checkAuth();
 
-  // Sign in via popup — keeps main page history clean
-  document.getElementById('sign-in-link')?.addEventListener('click', () => {
+  // ── Sign in via popup ──
+  document.getElementById('panel-sign-in')?.addEventListener('click', () => {
     const w = 480, h = 600;
     const left = (screen.width - w) / 2;
     const top = (screen.height - h) / 2;
@@ -76,33 +86,45 @@ const {
       `width=${w},height=${h},left=${left},top=${top},popup=yes`
     );
 
-    // Poll for popup close then refresh auth state
     const timer = setInterval(() => {
       if (!popup || popup.closed) {
         clearInterval(timer);
         checkAuth();
-        // Re-trigger any page-level auth hooks (e.g. favorites, tab bar)
         window.dispatchEvent(new Event('auth-changed'));
       }
     }, 300);
+
+    closePanel();
   });
 
-  const logoutModal = document.getElementById('logout-modal')!;
-
-  document.getElementById('user-menu')?.addEventListener('click', () => {
-    logoutModal.classList.remove('hidden');
-  });
-
-  document.getElementById('logout-cancel')?.addEventListener('click', () => {
-    logoutModal.classList.add('hidden');
-  });
-
-  document.getElementById('logout-backdrop')?.addEventListener('click', () => {
-    logoutModal.classList.add('hidden');
-  });
-
-  document.getElementById('logout-confirm')?.addEventListener('click', () => {
+  // ── Sign out ──
+  document.getElementById('panel-sign-out')?.addEventListener('click', () => {
     window.location.href = '/api/user/logout';
+  });
+
+  // ── Panel open/close ──
+  const panel = document.getElementById('side-panel')!;
+  const backdrop = document.getElementById('panel-backdrop')!;
+
+  function openPanel() {
+    panel.classList.add('open');
+    backdrop.classList.add('open');
+  }
+
+  function closePanel() {
+    panel.classList.remove('open');
+    backdrop.classList.remove('open');
+  }
+
+  document.getElementById('menu-trigger')?.addEventListener('click', openPanel);
+  document.getElementById('panel-close')?.addEventListener('click', closePanel);
+  backdrop.addEventListener('click', closePanel);
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('open')) {
+      closePanel();
+    }
   });
 </script>
 
@@ -188,28 +210,8 @@ const {
     opacity: 1;
   }
 
-  /* ── Sign In ── */
-  .sign-in-link {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 300;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: #c9a84c;
-    text-decoration: none;
-    background: none;
-    border: none;
-    cursor: pointer;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-  }
-
-  .sign-in-link:hover {
-    opacity: 1;
-  }
-
-  /* ── User Menu ── */
-  .user-menu {
+  /* ── Menu Trigger ── */
+  .menu-trigger {
     background: none;
     border: 1px solid rgba(201, 168, 76, 0.3);
     border-radius: 50%;
@@ -225,95 +227,133 @@ const {
     transition: opacity 0.2s;
   }
 
-  .user-menu:hover {
+  .menu-trigger:hover {
     opacity: 1;
+  }
+
+  /* ── Backdrop ── */
+  .panel-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+
+  .panel-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ── Side Panel ── */
+  .side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    width: 320px;
+    max-width: 85vw;
+    background: rgba(7, 46, 44, 0.96);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid rgba(201, 168, 76, 0.12);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(201, 168, 76, 0.03);
+    transform: translateX(100%);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+    padding: 2.5rem 2rem;
+  }
+
+  .side-panel.open {
+    transform: translateX(0);
+  }
+
+  .panel-close {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.2rem;
+    background: none;
+    border: none;
+    color: rgba(245, 239, 224, 0.3);
+    font-size: 1.4rem;
+    cursor: pointer;
+    padding: 0.3rem;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .panel-close:hover {
+    color: rgba(245, 239, 224, 0.7);
+  }
+
+  /* ── Panel Content ── */
+  .panel-nav {
+    margin-top: 2rem;
+  }
+
+  .panel-section {
+    padding: 0.5rem 0;
+  }
+
+  .panel-link {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #c9a84c;
+    text-decoration: none;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    padding: 0.3rem 0;
+  }
+
+  .panel-link:hover {
+    opacity: 1;
+  }
+
+  .panel-divider {
+    text-align: center;
+    color: #c9a84c;
+    opacity: 0.15;
+    font-size: 0.6rem;
+    padding: 1.4rem 0;
+    letter-spacing: 0.5em;
+  }
+
+  /* ── Auth Buttons ── */
+  .panel-auth {
+    padding-top: 0.2rem;
+  }
+
+  .panel-sign-in,
+  .panel-sign-out {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: none;
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 6px;
+    color: #c9a84c;
+    padding: 0.6rem 1.4rem;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    width: 100%;
+  }
+
+  .panel-sign-in:hover,
+  .panel-sign-out:hover {
+    background: rgba(201, 168, 76, 0.1);
+    border-color: rgba(201, 168, 76, 0.4);
   }
 
   .hidden {
     display: none !important;
-  }
-
-  /* ── Logout Modal ── */
-  .logout-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .logout-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(4px);
-  }
-
-  .logout-dialog {
-    position: relative;
-    background: #0d1b1a;
-    border: 1px solid rgba(201, 168, 76, 0.25);
-    border-radius: 12px;
-    padding: 2rem 2.5rem;
-    text-align: center;
-    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(201, 168, 76, 0.05);
-    max-width: 320px;
-    width: 90%;
-  }
-
-  .logout-ornament {
-    color: #c9a84c;
-    opacity: 0.25;
-    font-size: 0.8rem;
-    margin-bottom: 1.2rem;
-  }
-
-  .logout-text {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 1.1rem;
-    font-weight: 400;
-    color: #f5efe0;
-    margin-bottom: 1.8rem;
-    line-height: 1.4;
-  }
-
-  .logout-actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-  }
-
-  .logout-btn {
-    font-family: 'Quicksand', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 300;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    border: none;
-    border-radius: 6px;
-    padding: 0.6rem 1.4rem;
-    cursor: pointer;
-    transition: background 0.2s, opacity 0.2s;
-  }
-
-  .logout-cancel {
-    background: rgba(245, 239, 224, 0.08);
-    color: rgba(245, 239, 224, 0.6);
-  }
-
-  .logout-cancel:hover {
-    background: rgba(245, 239, 224, 0.14);
-    color: #f5efe0;
-  }
-
-  .logout-confirm {
-    background: rgba(201, 168, 76, 0.15);
-    color: #c9a84c;
-    border: 1px solid rgba(201, 168, 76, 0.3);
-  }
-
-  .logout-confirm:hover {
-    background: rgba(201, 168, 76, 0.25);
   }
 </style>

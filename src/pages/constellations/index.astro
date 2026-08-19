@@ -438,7 +438,7 @@ const allTracks = entries.flatMap(entry =>
       tabUniverse.classList.remove('active');
       tabFavorites.classList.add('active');
       if (headerLeft) headerLeft.classList.add('hide-mobile');
-      renderFavorites();
+      loadFavorites().then(() => renderFavorites());
     }
   }
 
