@@ -2,7 +2,7 @@
 name: Golden Hour
 subtitle: Keeper of Warmth
 color: "#e8c840"
-image: "/images/constellations/sun.png"
+image: "/images/constellations/sun.webp"
 quote: "In Tiny Lore, there is a world that is neither day nor night..."
 center:
   x: 786
