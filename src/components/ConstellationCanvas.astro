@@ -2,7 +2,7 @@
 import { getCollection } from 'astro:content';
 
 const entries = await getCollection('constellations');
-const constellationData = entries.map((entry) => ({
+const constellationData = entries.filter((e) => !e.data.hidden).map((entry) => ({
   id: entry.id,
   name: entry.data.name,
   subtitle: entry.data.subtitle,

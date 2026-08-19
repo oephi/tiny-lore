@@ -18,6 +18,7 @@ const existing = entries.map((e) => ({
   center: e.data.center,
   stars: e.data.stars,
   lines: e.data.lines,
+  hidden: e.data.hidden || false,
   image: e.data.image || '',
   tracks: e.data.tracks || [],
   body: (e as any).body || '',
@@ -57,6 +58,13 @@ const existing = entries.map((e) => ({
       <div class="field">
         <label for="filename">Filename</label>
         <input type="text" id="filename" placeholder="bear" />
+      </div>
+
+      <div class="field">
+        <label class="toggle-label">
+          <input type="checkbox" id="hidden-toggle" />
+          <span>Hidden (work in progress)</span>
+        </label>
       </div>
 
       <div class="field">

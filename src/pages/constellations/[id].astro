@@ -6,7 +6,7 @@ import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
   const entries = await getCollection('constellations');
-  return entries.map((entry) => ({
+  return entries.filter((e) => !e.data.hidden).map((entry) => ({
     params: { id: entry.id },
     props: { entry },
   }));

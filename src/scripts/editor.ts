@@ -56,6 +56,7 @@ const filenameInput = document.getElementById('filename') as HTMLInputElement;
 const storyInput = document.getElementById('story') as HTMLTextAreaElement;
 const imageInput = document.getElementById('image') as HTMLInputElement;
 const imagePreview = document.getElementById('image-preview')!;
+const hiddenToggle = document.getElementById('hidden-toggle') as HTMLInputElement;
 const starCount = document.getElementById('star-count')!;
 const lineCount = document.getElementById('line-count')!;
 const saveFeedback = document.getElementById('save-feedback')!;
@@ -343,11 +344,13 @@ document.getElementById('btn-save')!.addEventListener('click', async () => {
   // Filter out empty tracks (no title or file)
   const validTracks = tracks.filter(t => t.title.trim() || t.file.trim());
   const image = imageInput.value.trim();
+  const hidden = hiddenToggle.checked;
   const payload = {
     filename,
     name,
     subtitle: subtitleInput.value,
     color: colorInput.value,
+    hidden: hidden || undefined,
     image: image || undefined,
     center: { x: centerX, y: centerY },
     stars: stars.map(([x, y]) => ({ x, y })),
@@ -391,10 +394,11 @@ document.getElementById('btn-export')!.addEventListener('click', () => {
   ).join('\n');
 
   const image = imageInput.value.trim();
+  const hidden = hiddenToggle.checked;
   const md = `---
 name: ${name}
 subtitle: ${subtitle}
-color: "${color}"${image ? `\nimage: "${image}"` : ''}
+color: "${color}"${hidden ? `\nhidden: true` : ''}${image ? `\nimage: "${image}"` : ''}
 center:
   x: ${centerX}
   y: ${centerY}
@@ -464,6 +468,7 @@ function loadConstellation(id: string) {
     filenameInput.value = '';
     storyInput.value = '';
     imageInput.value = '';
+    hiddenToggle.checked = false;
     updateImagePreview();
     centerX = 0;
     centerY = 0;
@@ -485,6 +490,7 @@ function loadConstellation(id: string) {
   filenameInput.value = c.id;
   storyInput.value = c.body.trim();
   imageInput.value = c.image || '';
+  hiddenToggle.checked = c.hidden || false;
   updateImagePreview();
   centerX = c.center.x;
   centerY = c.center.y;
@@ -514,10 +520,16 @@ nameInput.addEventListener('input', () => draw());
 subtitleInput.addEventListener('input', () => draw());
 
 // Image preview
-function updateImagePreview() {
+function updateImagePreview(cacheBust = false) {
   const url = imageInput.value.trim();
   if (url) {
-    imagePreview.innerHTML = `<img src="${url}" alt="Preview" onerror="this.parentElement.innerHTML=''" />`;
+    const src = cacheBust ? `${url}?t=${Date.now()}` : url;
+    imagePreview.innerHTML = '';
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = 'Preview';
+    img.style.cssText = 'width:100%;height:auto;display:block;object-fit:contain;max-height:120px;border-radius:4px;';
+    imagePreview.appendChild(img);
   } else {
     imagePreview.innerHTML = '';
   }
@@ -557,7 +569,7 @@ imageFileInput.addEventListener('change', async () => {
 
     if (res.ok) {
       imageInput.value = data.url;
-      updateImagePreview();
+      updateImagePreview(true);
       showImageFeedback('Uploaded!');
     } else {
       showImageFeedback(data.error || 'Upload failed.', true);

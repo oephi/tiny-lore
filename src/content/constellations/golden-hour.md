@@ -4,8 +4,8 @@ subtitle: Keeper of Warmth
 color: "#e8c840"
 image: "/images/constellations/sun.png"
 center:
-  x: 800
-  y: -400
+  x: 786
+  y: -104
 stars:
   - x: 0
     y: -50

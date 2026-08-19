@@ -10,6 +10,7 @@ function buildMarkdown(data: {
   name: string;
   subtitle: string;
   color: string;
+  hidden?: boolean;
   image?: string;
   center: { x: number; y: number };
   stars: { x: number; y: number }[];
@@ -17,7 +18,7 @@ function buildMarkdown(data: {
   tracks?: { title: string; duration: string; file: string }[];
   story: string;
 }): string {
-  const { name, subtitle, color, image, center, stars, lines, tracks = [], story } = data;
+  const { name, subtitle, color, hidden, image, center, stars, lines, tracks = [], story } = data;
 
   const starsYaml = stars.length
     ? `stars:\n${stars.map((s) => `  - x: ${s.x}\n    y: ${s.y}`).join('\n')}`
@@ -34,7 +35,7 @@ function buildMarkdown(data: {
   return `---
 name: ${name}
 subtitle: ${subtitle || 'A new constellation'}
-color: "${color || '#c9a84c'}"${image ? `\nimage: "${image}"` : ''}
+color: "${color || '#c9a84c'}"${hidden ? `\nhidden: true` : ''}${image ? `\nimage: "${image}"` : ''}
 center:
   x: ${center?.x ?? 0}
   y: ${center?.y ?? 0}

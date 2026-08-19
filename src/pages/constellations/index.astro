@@ -6,7 +6,8 @@ import AudioPlayer from '../../components/AudioPlayer.astro';
 import { getCollection } from 'astro:content';
 
 // Build a lookup of all tracks across all constellations
-const entries = await getCollection('constellations');
+const allEntries = await getCollection('constellations');
+const entries = allEntries.filter((e) => !e.data.hidden);
 const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
 // Constellation metadata for mini renderings
