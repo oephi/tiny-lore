@@ -43,7 +43,10 @@ lines:
     to: 7
   - from: 5
     to: 8
-tracks: []
+tracks:
+  - title: "Welcome (instrumental)"
+    duration: "6:42"
+    file: "golden-hour/golden-hour-3.1.flac golden-hour-3.1.flac"
 ---
 
 In tiny lore, there is a world that is neither day nor night. 
