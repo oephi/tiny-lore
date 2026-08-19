@@ -1,5 +1,5 @@
 ---
-name: The Sun
+name: The Golden Hour
 subtitle: Keeper of Warmth
 color: "#e8c840"
 center:
@@ -43,16 +43,21 @@ lines:
     to: 7
   - from: 5
     to: 8
+tracks: []
 ---
 
-Once, long before anyone can remember, the sun was shy.
+In tiny lore, there is a world that is neither day nor night. 
 
-It would peek over the horizon each morning, see the whole world looking up at it, and duck back down again, blushing orange and pink.
+This world exists in the in-between. 
 
-The flowers drooped. The rivers slowed. The children forgot what warmth felt like.
+Where the sun gently lingers, as it begins its slow descent towards the horizon. 
 
-Then one morning, a very small girl walked to the top of the tallest hill. She didn't shout or wave. She simply sat down, closed her eyes, and whispered, "It's okay. You don't have to be bright for everyone. Just be bright for you."
+It is in this quiet moment, that we say farewell to the brightness of day…to make way for the stars, the moon, and the holding of night. 
 
-The sun, curious, rose just a little higher to hear her better. Then a little higher still. Before it knew what had happened, it was all the way up in the sky, and the world was warm again.
+Here, in this in between, the world is the sun. And the sun is the world. It takes up all of the sky. A vast orb of golden light. Molten, lava-like, spread. Everything feels warm. 
 
-The girl smiled, eyes still closed, feeling the light on her face. And the sun, for the first time, smiled too.
+These streams of light reach even the smallest of places - under leaves, between stones, even into pockets. These are places that wait all day for a little gold of their own. 
+
+And it is here, in this world of the in-between, that your heart remembers to breathe. 
+
+We call this world: The Golden Hour.

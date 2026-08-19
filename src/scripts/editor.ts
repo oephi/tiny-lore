@@ -616,41 +616,37 @@ function draw() {
   }
 
   // ── Title / Subtitle Preview ──
-  // Show the constellation name and subtitle above the stars, matching the map style
+  // Matches the constellation map: label anchored 120px above center,
+  // name on top, subtitle below, bottom edge at the anchor point.
   const name = nameInput.value;
   const subtitle = subtitleInput.value;
   if (name || subtitle) {
-    // Find the topmost star to position the label above it
-    let topY = cy; // default to center if no stars
-    if (stars.length > 0) {
-      let minStarY = Infinity;
-      for (const [, sy] of stars) {
-        if (sy < minStarY) minStarY = sy;
-      }
-      topY = cy + minStarY;
-    }
-
-    const labelY = topY - 40;
+    // Anchor point: 120px above canvas center (matches worldToScreen(center.y - 120))
+    const anchorY = cy - 120;
     ctx.textAlign = 'center';
 
+    // Name sits above the anchor, subtitle just below the name
+    if (name) {
+      ctx.fillStyle = '#f5efe0';
+      ctx.font = '18px "Tan Mon Cheri", serif';
+      ctx.shadowColor = 'rgba(201, 168, 76, 0.5)';
+      ctx.shadowBlur = 20;
+      ctx.fillText(name, cx, anchorY);
+      ctx.shadowBlur = 0;
+    }
+
     if (subtitle) {
-      ctx.fillStyle = hexToRgba(color, 0.45);
+      ctx.fillStyle = hexToRgba(color, 0.7);
       ctx.font = '300 10px Quicksand, sans-serif';
-      // Draw with manual letter spacing for broad browser support
+      // Manual letter spacing
       const upper = subtitle.toUpperCase();
       const spacing = 3;
       const totalWidth = ctx.measureText(upper).width + spacing * (upper.length - 1);
       let tx = cx - totalWidth / 2;
       for (const ch of upper) {
-        ctx.fillText(ch, tx, labelY - 18);
+        ctx.fillText(ch, tx, anchorY + 16);
         tx += ctx.measureText(ch).width + spacing;
       }
-    }
-
-    if (name) {
-      ctx.fillStyle = hexToRgba(color, 0.7);
-      ctx.font = '18px "Tan Mon Cheri", serif';
-      ctx.fillText(name, cx, labelY);
     }
 
     ctx.textAlign = 'start';
