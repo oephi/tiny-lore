@@ -1,5 +1,5 @@
 ---
-name: Golden Hour
+name: The Golden Hour
 subtitle: Keeper of Warmth
 color: "#e8c840"
 image: "/images/constellations/sun.webp"
