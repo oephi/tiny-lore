@@ -24,6 +24,8 @@ stars:
     y: 0
   - x: -85
     y: 0
+  - x: -480
+    y: 40
 lines:
   - from: 0
     to: 1
