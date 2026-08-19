@@ -1,6 +1,6 @@
 ---
-name: Humming Stone
-subtitle: The mysterious keeper
+name: The Humming Stone
+subtitle: Keeper of Mysteries
 color: "#c0a0d0"
 center:
   x: -900
@@ -89,4 +89,4 @@ There are those that say that to hear the hum is to have it speak to your heart,
 
 Whatever the hum may sound like, those who have heard it say the same thing: once you hear it, you notice it everywhere. In the space between one breath and the next. In the pause between two words. And in the quiet just before sleep. 
 
-We call this world: The Humming Stone. 
+We call this world: The Humming Stone.
