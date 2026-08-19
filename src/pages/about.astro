@@ -13,8 +13,6 @@ import SiteHeader from '../components/SiteHeader.astro';
     <div class="about-content">
       <h1 class="about-title">About Tiny Lore</h1>
 
-      <div class="about-ornament">&#10022;</div>
-
       <p class="about-lead">Tiny Lore is bedtime audio for children.</p>
 
       <p>We make short stories and immersive sound design for the in-between hours &ndash; after bath, before sleep &ndash; anytime when kids need help coming down from the day. When everything they've learned, heard and felt needs somewhere to go.</p>
@@ -26,10 +24,10 @@ import SiteHeader from '../components/SiteHeader.astro';
       <p class="about-tagline">Tiny Lore. Where tiny moments meet infinite worlds.</p>
     </div>
 
+    <div class="section-divider">&#183; &#183; &#183;</div>
+
     <section class="team">
       <h2 class="team-title">Our Team</h2>
-      <div class="team-ornament">&#10022;</div>
-
       <div class="team-grid">
         <div class="team-member">
           <canvas class="team-constellation" data-color="100,160,220" data-stars='[{"x":-42,"y":-12},{"x":-42,"y":16},{"x":-26,"y":4},{"x":-10,"y":-10},{"x":6,"y":-20},{"x":10,"y":-6},{"x":28,"y":-8},{"x":38,"y":6},{"x":22,"y":14},{"x":-8,"y":12}]' data-lines='[[0,2],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,2],[3,5]]'></canvas>
@@ -152,6 +150,15 @@ import SiteHeader from '../components/SiteHeader.astro';
     -webkit-text-fill-color: transparent;
     text-shadow: 0 0 30px rgba(201, 168, 76, 0.25);
     margin-bottom: 1.2rem;
+  }
+
+  .section-divider {
+    text-align: center;
+    color: #c9a84c;
+    opacity: 0.3;
+    font-size: 1rem;
+    letter-spacing: 0.8em;
+    padding: 3rem 0;
   }
 
   .about-ornament {

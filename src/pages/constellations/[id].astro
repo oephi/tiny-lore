@@ -32,7 +32,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       <header class="story-header">
         <p class="story-subtitle">{subtitle}</p>
         <h1 class="story-title" style={`--accent: ${color};`}>{name}</h1>
-        <div class="ornament">&#10022;</div>
       </header>
 
       {image && (
@@ -78,7 +77,6 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
       </div>
 
       <footer class="story-footer">
-        <div class="ornament">&#10022; &nbsp; &#10022; &nbsp; &#10022;</div>
         <a href="/constellations" class="back-link">Return to the stars</a>
       </footer>
     </article>
@@ -308,7 +306,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   .story-header {
     text-align: center;
-    margin-bottom: 3.5rem;
+    margin-bottom: 0;
   }
 
   .story-subtitle {
