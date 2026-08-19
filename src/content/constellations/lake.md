@@ -1,6 +1,6 @@
 ---
-name: The Lake
-subtitle: Mirror of Dreams
+name: Stardust Lake
+subtitle: Mirror of the sky
 color: "#4090c0"
 center:
   x: -700
@@ -43,14 +43,36 @@ tracks:
     file: "GoldenSun-unity-final-original-version.wav"
 ---
 
-There was a lake so still that the sky forgot where it ended and the water began.
+In tiny lore, there is a world that is illuminated only by the shine of the midnight moon. 
 
-Birds would fly down toward their own reflections, confused and delighted. Fish would leap up toward the clouds, certain they could touch them.
+At all other times, this world stays silent, hidden, like a mystery. 
 
-At the centre of the lake sat a small island, no bigger than a blanket, where a single willow tree grew. Beneath that tree lived a frog who collected dreams.
+If you were to peer into this world now, you would see that it is made of sky and water.  
 
-Every night, when children fell asleep near the lake, their dreams would drift down like dandelion seeds and land softly on the water. The frog would gather them up and plant them in the muddy shore.
+Above, a near-black sky, inky in hue.
 
-By morning, the dreams had grown into small glowing flowers that lasted exactly one day. If you were lucky enough to find one, you could hold it to your ear and hear the dream it came from — a song, a laugh, an adventure not yet taken.
+Below, a lake, still as glass. 
 
-The frog never kept a single dream for himself. "Dreams are meant to be given away," he'd say to no one in particular, and go back to waiting for the night.
+And all that lies in between: hushed, waiting. 
+
+It is like the world has held its breath, existing in the gaps in between. 
+
+Only when the night reaches its deepest point does the midnight moon begin to stir, a silver glow in the darkness. 
+
+Pause 
+
+Then… a single twinkle of light responds on the waters below.  Then another. And another. One here, one there. Again and again. Like fireflies along the lake’s surface. 
+
+The lake takes each spark, holds it close for a moment, then slowly lets it go, high into the sky. 
+
+A gift of light.
+
+And so it goes, sparks held in the lake, released in the sky, to become stars visible in the lake's reflection. 
+
+At times, it is hard to tell where the sky begins and the lake ends. 
+Vast, infinite twinkling lights mirrored, in all directions, on an inky backdrop, teeming with Life.
+
+And in this moment, everything is close - and we remember that there is really not so much distance between things after all. 
+
+We call this world: The Stardust Lake. 
+
