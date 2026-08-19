@@ -1,5 +1,5 @@
 ---
-name: Stardust Lake
+name: The Stardust Lake
 subtitle: Mirror of the sky
 color: "#4090c0"
 center:
@@ -72,5 +72,4 @@ Vast, infinite twinkling lights mirrored, in all directions, on an inky backdrop
 
 And in this moment, everything is close - and we remember that there is really not so much distance between things after all. 
 
-We call this world: The Stardust Lake. 
-
+We call this world: The Stardust Lake.
