@@ -2,6 +2,7 @@
 name: The Stardust Lake
 subtitle: Mirror of the sky
 color: "#4090c0"
+quote: "In tiny lore, there is a world that is illuminated only by the shine of the midnight moon."
 center:
   x: -700
   y: 300
