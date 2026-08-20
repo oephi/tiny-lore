@@ -45,7 +45,10 @@ const allTracks = entries.flatMap(entry =>
         <p class="fav-subtitle">Your collected starlight</p>
       </header>
 
-      <div class="favorites-empty" id="favorites-empty">
+      <div class="favorites-loading" id="favorites-loading">
+        <div class="fav-spinner"></div>
+      </div>
+      <div class="favorites-empty hidden" id="favorites-empty">
         <div class="empty-stars">
           <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
         </div>
@@ -147,6 +150,7 @@ const allTracks = entries.flatMap(entry =>
     const favView = document.getElementById('favorites-view')!;
     const favList = document.getElementById('favorites-list')!;
     const favEmpty = document.getElementById('favorites-empty')!;
+    const favLoading = document.getElementById('favorites-loading')!;
     const tabUniverse = document.getElementById('tab-universe')!;
     const tabFavorites = document.getElementById('tab-favorites')!;
 
@@ -155,6 +159,7 @@ const allTracks = entries.flatMap(entry =>
     let currentTab = 'universe';
     let favorites: string[] = [];
     let loggedIn = false;
+    let favoritesLoaded = false;
     let currentTrackId = '';
     let isPlaying = false;
     let renderedTracks: any[] = [];
@@ -165,11 +170,14 @@ const allTracks = entries.flatMap(entry =>
         const data = await res.json();
         loggedIn = data.loggedIn;
         favorites = data.favorites || [];
+        favoritesLoaded = true;
 
         if (loggedIn) {
           document.getElementById('tab-bar')!.classList.remove('hidden');
         }
-      } catch { /* silently fail */ }
+      } catch {
+        favoritesLoaded = true;
+      }
     }
 
     function buildFavPlaylist() {
@@ -210,6 +218,8 @@ const allTracks = entries.flatMap(entry =>
     function renderFavorites() {
       favList.innerHTML = '';
       renderedTracks = [];
+
+      favLoading.classList.add('hidden');
 
       const favTracks = allTracks.filter(t => favorites.includes(t.trackId));
 
@@ -383,7 +393,14 @@ const allTracks = entries.flatMap(entry =>
         tabUniverse.classList.remove('active');
         tabFavorites.classList.add('active');
         if (headerLeft) headerLeft.classList.add('hide-mobile');
-        loadFavorites().then(() => renderFavorites());
+        if (favoritesLoaded) {
+          renderFavorites();
+        } else {
+          favLoading.classList.remove('hidden');
+          favEmpty.classList.add('hidden');
+          favList.classList.add('hidden');
+          loadFavorites().then(() => renderFavorites());
+        }
       }
     }
 
@@ -534,6 +551,30 @@ const allTracks = entries.flatMap(entry =>
     text-transform: uppercase;
     color: #c9a84c;
     opacity: 0.45;
+  }
+
+  /* ── Loading State ── */
+  .favorites-loading {
+    display: flex;
+    justify-content: center;
+    padding: 4rem 0;
+  }
+
+  .favorites-loading.hidden {
+    display: none;
+  }
+
+  .fav-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(201, 168, 76, 0.15);
+    border-top-color: rgba(201, 168, 76, 0.6);
+    border-radius: 50%;
+    animation: fav-spin 0.7s linear infinite;
+  }
+
+  @keyframes fav-spin {
+    to { transform: rotate(360deg); }
   }
 
   /* ── Empty State ── */

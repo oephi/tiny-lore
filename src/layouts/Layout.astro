@@ -80,11 +80,16 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://tiny-lor
       bottom: 1.5rem;
       left: 0;
       right: 0;
-      z-index: 100;
+      z-index: 110;
       padding: 0 1rem;
       max-width: 480px;
       margin: 0 auto;
       transition: opacity 0.3s, transform 0.3s;
+    }
+
+    /* Push player above tab bar when it's visible */
+    body:has(.tab-bar:not(.hidden)) .global-player {
+      bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
     }
 
     .global-player.hidden {
