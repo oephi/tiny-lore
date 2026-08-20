@@ -39,4 +39,4 @@ tracks:
     file: "GoldenSun-stillness-final-v2.wav"
 ---
 
-Coming soon 
+Coming soon
