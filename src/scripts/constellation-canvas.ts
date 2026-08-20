@@ -7,7 +7,7 @@ const constellations: Constellation[] = JSON.parse(
 );
 
 // ── Constants ──
-const BG_STAR_COUNT = 3000;       // Number of decorative background stars
+const BG_STAR_COUNT = 5000;       // Number of decorative background stars
 const STAR_RADIUS = 2.2;          // Base radius of constellation star dots
 const LINE_ALPHA_DIM = 0.08;      // Line opacity when not highlighted
 const LINE_ALPHA_BRIGHT = 0.55;   // Line opacity when fully highlighted
@@ -75,15 +75,28 @@ interface BgStar {
 }
 
 const bgStars: BgStar[] = [];
+const STAR_SPREAD = WORLD_SIZE * 1.5;
 for (let i = 0; i < BG_STAR_COUNT; i++) {
+  // Distribute in a circle to avoid visible rectangular edges
+  const angle = Math.random() * Math.PI * 2;
+  const dist = Math.sqrt(Math.random()) * STAR_SPREAD / 2;
   bgStars.push({
-    x: (Math.random() - 0.5) * WORLD_SIZE,
-    y: (Math.random() - 0.5) * WORLD_SIZE,
+    x: Math.cos(angle) * dist,
+    y: Math.sin(angle) * dist,
     r: Math.random() * 1.6 + 0.3,
     baseAlpha: Math.random() * 0.6 + 0.1,
     twinkleSpeed: Math.random() * 0.4 + 0.1,
     twinklePhase: Math.random() * Math.PI * 2,
   });
+}
+
+// ── Camera Bounds ──
+// Clamp the camera so users can't pan past the background star field
+const WORLD_HALF = WORLD_SIZE / 2;
+
+function clampCamera(cam: { x: number; y: number }) {
+  cam.x = Math.max(-WORLD_HALF, Math.min(WORLD_HALF, cam.x));
+  cam.y = Math.max(-WORLD_HALF, Math.min(WORLD_HALF, cam.y));
 }
 
 // ── Coordinate Transforms ──
@@ -131,6 +144,7 @@ canvas.addEventListener('pointermove', (e) => {
     const dy = (e.clientY - dragStart.y) / camera.zoom;
     targetCamera.x = cameraStart.x - dx;
     targetCamera.y = cameraStart.y - dy;
+    clampCamera(targetCamera);
   }
 });
 
@@ -179,6 +193,7 @@ canvas.addEventListener('wheel', (e) => {
   const [wx, wy] = screenToWorld(e.clientX, e.clientY);
   targetCamera.x += (wx - targetCamera.x) * (1 - 1 / factor) * 0.3;
   targetCamera.y += (wy - targetCamera.y) * (1 - 1 / factor) * 0.3;
+  clampCamera(targetCamera);
 
   if (!interacted) {
     interacted = true;
