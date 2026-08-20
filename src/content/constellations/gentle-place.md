@@ -2,7 +2,7 @@
 name: The Gentle Place
 subtitle: Holder of the Infinite
 color: "#ee5de9"
-quote: "In tiny lore, there is a world that has no walls..."
+quote: "In Tiny Lore, there is a world that has no walls..."
 center:
   x: 400
   y: -600
