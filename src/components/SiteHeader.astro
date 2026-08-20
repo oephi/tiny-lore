@@ -46,6 +46,8 @@ const {
       <button class="panel-sign-out hidden" id="panel-sign-out">Sign out</button>
     </div>
   </nav>
+
+  <p class="panel-copyright">&copy; Tiny Lore 2026 — Made with heart by humans.</p>
 </aside>
 
 <script>
@@ -275,6 +277,8 @@ const {
     transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     overflow-y: auto;
     padding: 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
   }
 
   .side-panel.open {
@@ -361,6 +365,16 @@ const {
   .panel-sign-out:hover {
     background: rgba(201, 168, 76, 0.1);
     border-color: rgba(201, 168, 76, 0.4);
+  }
+
+  .panel-copyright {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: rgba(245, 239, 224, 0.15);
+    margin-top: auto;
+    padding-top: 2rem;
   }
 
   .hidden {

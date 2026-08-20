@@ -78,6 +78,7 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
       <footer class="story-footer">
         <a href="/constellations" class="back-link">Return to the stars</a>
+        <p class="copyright">&copy; Tiny Lore 2026 — Made with heart by humans.</p>
       </footer>
     </article>
   </div>
@@ -548,5 +549,14 @@ const AUDIO_BASE = import.meta.env.PUBLIC_AUDIO_BASE_URL || '/audio';
 
   .story-footer .back-link:hover {
     opacity: 1;
+  }
+
+  .copyright {
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.55rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    color: rgba(245, 239, 224, 0.15);
+    margin-top: 3rem;
   }
 </style>
