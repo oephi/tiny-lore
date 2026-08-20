@@ -31,7 +31,7 @@ lines:
 tracks: []
 ---
 
-In tiny lore, there is a world that has no walls. 
+In Tiny Lore, there is a world that has no walls. 
 
 This might sound strange. 
 
