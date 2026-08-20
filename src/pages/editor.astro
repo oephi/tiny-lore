@@ -46,7 +46,13 @@ const existing = entries.map((e) => ({
 
       <div class="field">
         <label for="name">Name</label>
-        <input type="text" id="name" placeholder="The Bear" />
+        <div class="name-row">
+          <input type="text" id="name" placeholder="The Bear" />
+          <button id="btn-generate" class="generate-btn" title="Generate constellation from name">
+            <span class="generate-text">Generate</span>
+            <span class="generate-spinner hidden"></span>
+          </button>
+        </div>
       </div>
       <div class="field">
         <label for="subtitle">Subtitle</label>
@@ -252,6 +258,59 @@ const existing = entries.map((e) => ({
     background: rgba(201, 168, 76, 0.15);
     border-color: #c9a84c;
     color: #f5efe0;
+  }
+
+  .name-row {
+    display: flex;
+    gap: 0.3rem;
+  }
+
+  .name-row input {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .generate-btn {
+    padding: 0.5rem 0.7rem;
+    background: rgba(201, 168, 76, 0.1);
+    border: 1px solid rgba(201, 168, 76, 0.25);
+    border-radius: 2px;
+    color: #c9a84c;
+    font-family: 'Quicksand', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 400;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .generate-btn:hover {
+    background: rgba(201, 168, 76, 0.2);
+    border-color: rgba(201, 168, 76, 0.4);
+  }
+
+  .generate-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .generate-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid rgba(201, 168, 76, 0.3);
+    border-top-color: #c9a84c;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .generate-spinner.hidden {
+    display: none;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .field input[type="text"] {

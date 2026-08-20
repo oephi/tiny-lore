@@ -859,6 +859,48 @@ minimap.addEventListener('click', (e) => {
   drawMinimap();
 });
 
+// ── Generate Constellation ──
+const generateBtn = document.getElementById('btn-generate') as HTMLButtonElement;
+
+generateBtn.addEventListener('click', async () => {
+  const name = nameInput.value.trim();
+  if (!name) {
+    showFeedback('Enter a name first.', true);
+    return;
+  }
+
+  generateBtn.disabled = true;
+  generateBtn.querySelector('.generate-text')!.classList.add('hidden');
+  generateBtn.querySelector('.generate-spinner')!.classList.remove('hidden');
+
+  try {
+    const res = await fetch('/api/generate-constellation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showFeedback(data.error || 'Generation failed.', true);
+      return;
+    }
+
+    saveHistory();
+    stars = data.stars.map((s: number[]) => [s[0], s[1]] as [number, number]);
+    lines = data.lines.map((l: number[]) => [l[0], l[1]] as [number, number]);
+    updateCounts();
+    draw();
+    showFeedback(`Generated ${stars.length} stars, ${lines.length} lines`);
+  } catch (err) {
+    showFeedback('Network error.', true);
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.querySelector('.generate-text')!.classList.remove('hidden');
+    generateBtn.querySelector('.generate-spinner')!.classList.add('hidden');
+  }
+});
+
 // ── Keyboard Shortcuts ──
 // 1/2/3 to switch tools, Ctrl+Z to undo. Disabled when typing in input fields.
 document.addEventListener('keydown', (e) => {
