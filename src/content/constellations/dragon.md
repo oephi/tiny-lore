@@ -2,6 +2,7 @@
 name: The Dragon
 subtitle: The Smallest Flame
 color: "#80c060"
+hidden: true
 center:
   x: 600
   y: 400
