@@ -2,6 +2,7 @@
 name: The Snake
 subtitle: Ol snakey boy
 color: "#c94a4a"
+hidden: true
 center:
   x: 502
   y: -1133
@@ -57,6 +58,7 @@ lines:
     to: 0
   - from: 0
     to: 6
+tracks: []
 ---
 
 This the story of a slithery little sucker
