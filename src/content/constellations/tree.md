@@ -2,6 +2,7 @@
 name: The Ancient Tree
 subtitle: Root of All Stories
 color: "#60a050"
+hidden: true
 center:
   x: 200
   y: 600
@@ -33,6 +34,7 @@ lines:
     to: 5
   - from: 4
     to: 6
+tracks: []
 ---
 
 The oldest tree in the forest had been alive so long it had forgotten its own name. It had watched rivers change their minds about which way to flow. It had seen mountains grow tired and sit down.
