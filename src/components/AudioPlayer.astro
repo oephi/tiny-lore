@@ -16,6 +16,14 @@ const { id } = Astro.props;
       <span class="player-time" id={`${id}-time`}>0:00 / 0:00</span>
     </div>
   </div>
+  <button class="player-loop" id={`${id}-loop`} title="Loop track">
+    <svg viewBox="0 0 24 24" class="loop-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M17 2l4 4-4 4"/>
+      <path d="M3 11V9a4 4 0 014-4h14"/>
+      <path d="M7 22l-4-4 4-4"/>
+      <path d="M21 13v2a4 4 0 01-4 4H3"/>
+    </svg>
+  </button>
   <button class="player-close" id={`${id}-close`}>&times;</button>
 </div>
 
@@ -30,6 +38,30 @@ const { id } = Astro.props;
     border: 1px solid color-mix(in srgb, var(--accent, #c9a84c) 20%, transparent);
     border-radius: 10px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+
+  .player-loop {
+    background: none;
+    border: none;
+    color: rgba(245, 239, 224, 0.25);
+    cursor: pointer;
+    padding: 0.2rem;
+    flex-shrink: 0;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .player-loop:hover {
+    color: rgba(245, 239, 224, 0.5);
+  }
+
+  :global(.player-loop.active) {
+    color: var(--accent, #c9a84c);
+  }
+
+  .loop-icon {
+    width: 16px;
+    height: 16px;
   }
 
   .player-close {

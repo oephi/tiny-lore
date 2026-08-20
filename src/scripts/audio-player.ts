@@ -35,8 +35,11 @@ export function initGlobalPlayer() {
   const barEl = document.getElementById('gp-bar')!;
   const timeEl = document.getElementById('gp-time')!;
   const closeBtn = document.getElementById('gp-close')!;
+  const loopBtn = document.getElementById('gp-loop')!;
 
   if (!player) return;
+
+  let looping = false;
 
   function emitState() {
     window.dispatchEvent(new CustomEvent('audio-state', {
@@ -133,8 +136,9 @@ export function initGlobalPlayer() {
     audio.currentTime = pct * audio.duration;
   });
 
-  // Auto-play next track in playlist
+  // Auto-play next track in playlist (loop mode handles repeat via audio.loop)
   audio.addEventListener('ended', () => {
+    if (looping) return; // audio.loop handles it, but guard just in case
     if (playlist.length > 0 && playlistIndex >= 0 && playlistIndex + 1 < playlist.length) {
       playlistIndex++;
       const next = playlist[playlistIndex];
@@ -144,6 +148,13 @@ export function initGlobalPlayer() {
       playBtn.innerHTML = '&#9654;';
       emitState();
     }
+  });
+
+  // Loop toggle
+  loopBtn.addEventListener('click', () => {
+    looping = !looping;
+    audio.loop = looping;
+    loopBtn.classList.toggle('active', looping);
   });
 
   // Close button
