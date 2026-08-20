@@ -2,6 +2,7 @@
 name: The Fox
 subtitle: Finder of the Moon
 color: "#d07030"
+hidden: true
 center:
   x: -500
   y: -500
@@ -33,6 +34,7 @@ lines:
     to: 6
   - from: 6
     to: 5
+tracks: []
 ---
 
 The fox woke to find the sky empty. No moon. Not even a sliver.
