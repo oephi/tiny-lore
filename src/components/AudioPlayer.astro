@@ -51,12 +51,14 @@ const { id } = Astro.props;
     line-height: 1;
   }
 
-  .player-loop:hover {
-    color: rgba(245, 239, 224, 0.5);
+  @media (hover: hover) {
+    .player-loop:hover {
+      color: rgba(245, 239, 224, 0.5);
+    }
   }
 
   :global(.player-loop.active) {
-    color: var(--accent, #c9a84c);
+    color: var(--accent, #c9a84c) !important;
   }
 
   .loop-icon {
