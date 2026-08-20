@@ -1,8 +1,7 @@
 ---
 name: The Snake
-subtitle: Ol snakey boy
+subtitle: Cradle of Bellies
 color: "#c94a4a"
-hidden: true
 center:
   x: 502
   y: -1133
@@ -61,4 +60,4 @@ lines:
 tracks: []
 ---
 
-This the story of a slithery little sucker
+Coming soon
