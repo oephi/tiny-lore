@@ -2,7 +2,7 @@
 name: The Humming Stone
 subtitle: Keeper of Mysteries
 color: "#c0a0d0"
-quote: "In tiny lore, there is a world with a very large, old stone..."
+quote: "In Tiny Lore, there is a world with a very large, old stone..."
 center:
   x: -900
   y: -200
