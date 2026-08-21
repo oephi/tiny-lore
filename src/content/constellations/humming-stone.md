@@ -49,7 +49,7 @@ lines:
 tracks: []
 ---
 
-In tiny lore, there is a world with a very large, old stone. 
+In Tiny Lore, there is a world with a very large, old stone. 
 
 This stone is no ordinary stone. Not one that you could pick up with your hands or kick along with your feet. 
 
