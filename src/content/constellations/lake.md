@@ -2,7 +2,7 @@
 name: The Stardust Lake
 subtitle: Mirror of the sky
 color: "#4090c0"
-quote: "In tiny lore, there is a world that is illuminated only by the shine of the midnight moon..."
+quote: "In Tiny Lore, there is a world that is illuminated only by the shine of the midnight moon..."
 center:
   x: -700
   y: 300
@@ -44,7 +44,7 @@ tracks:
     file: "GoldenSun-unity-final-original-version.wav"
 ---
 
-In tiny lore, there is a world that is illuminated only by the shine of the midnight moon. 
+In Tiny Lore, there is a world that is illuminated only by the shine of the midnight moon. 
 
 At all other times, this world stays silent, hidden, like a mystery. 
 
